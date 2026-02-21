@@ -7,20 +7,61 @@ const api = {
 };
 
 const reactions = {
-  like: { emoji: '👍', label: { en: 'Like', ru: 'Нравится' } },
-  love: { emoji: '❤️', label: { en: 'Love', ru: 'Люблю' } },
-  funny: { emoji: '😂', label: { en: 'Funny', ru: 'Смешно' } },
+  like: { emoji: '👍', label: { en: 'Like', ru: 'Лайк' } },
+  love: { emoji: '❤️', label: { en: 'Love', ru: 'Нравиться' } },
+  funny: { emoji: '😂', label: { en: 'Funny', ru: "хаха" } },
   poop: { emoji: '💩', label: { en: 'Poop', ru: 'Фу' } }
 };
 
 const i18n = {
   en: {
-    login: 'Login', register: 'Register', logout: 'Logout', hi: 'Hi,', welcome: 'Welcome', postPlaceholder: "What's happening?", post: 'Post', comments: 'Comments', writeComment: 'Write a comment', send: 'Send', create: 'Create', cancel: 'Cancel', loginFailed: 'Login failed', regFailed: 'Registration failed', loginTitle: 'Sign in', registerTitle: 'Create account', reactLike: 'Like', reactLove: 'Love', reactFunny: 'Funny', loginToReact: 'Login to react', loginToComment: 'Login to comment', loginToPost: 'Login to post', subscribe: 'Subscribe', unsubscribe: 'Unsubscribe', subscribers: 'Subscribers', editProfile: 'Edit Profile', notifications: 'Notifications', noNotifications: 'No notifications', markAllAsRead: 'Mark all as read', subscribedYou: 'subscribed to you', postedNew: 'posted a new post', feed: 'Feed', messages: 'Messages', noMessages: 'No messages', typeMessage: 'Type a message...', sendMessage: 'Send Message'
+    login: 'Login', register: 'Register', logout: 'Logout', hi: 'Hi,', welcome: 'Welcome', postPlaceholder: "Bro, whats wrong or send meme :)", post: 'Опубликовать', comments: 'Comments', writeComment: 'Write a comment', send: 'Send', create: 'Create', cancel: 'Cancel', loginFailed: 'Login failed', regFailed: 'Registration failed', loginTitle: 'Sign in', registerTitle: 'Create account', reactLike: 'Like', reactLove: 'Love', reactFunny: 'Funny', loginToReact: 'Login to react', loginToComment: 'Login to comment', loginToPost: 'Login to post', subscribe: 'Subscribe', unsubscribe: 'Unsubscribe', subscribers: 'Subscribers', editProfile: 'Edit Profile', notifications: 'Notifications', noNotifications: 'No notifications', markAllAsRead: 'Mark all as read', subscribedYou: 'subscribed to you', postedNew: 'posted a new post', feed: 'Feed', subscriptions: 'Subscriptions', messages: 'Messages', noMessages: 'No messages', typeMessage: 'Type a message...', sendMessage: 'Send Message',
+    passwordRequirements: 'At least 8 characters, one uppercase, one lowercase, one digit, one special character',
+    password_min_length: 'Password must be at least 8 characters',
+    password_need_upper: 'Password must contain at least one uppercase letter',
+    password_need_lower: 'Password must contain at least one lowercase letter',
+    password_need_digit: 'Password must contain at least one digit',
+    password_need_special: 'Password must contain at least one special character (!@#$%^&* etc.)',
+    usernameRequired: 'Please enter a username',
+    username_taken: 'This username is already taken (or too similar to an existing one)',
+    recordVoice: 'Record voice',
+    stopRecord: 'Stop',
+    recording: 'Recording…',
+    voiceRecorded: 'Voice message recorded',
+    recordVoiceTitle: 'Record voice message',
+    noMic: 'Microphone access is required for recording',
+    noPostsSubscriptions: 'Subscribe to users to see their posts here',
+    viewInSubscriptions: 'View in Subscriptions'
   },
   ru: {
-    login: 'Вход', register: 'Регистрация', logout: 'Выход', hi: 'Привет,', welcome: 'Добро пожаловать', postPlaceholder: 'Что нового?', post: 'Опубликовать', comments: 'Комментарии', writeComment: 'Написать комментарий', send: 'Отправить', create: 'Создать', cancel: 'Отмена', loginFailed: 'Ошибка входа', regFailed: 'Ошибка регистрации', loginTitle: 'Вход', registerTitle: 'Создать аккаунт', reactLike: 'Нравится', reactLove: 'Люблю', reactFunny: 'Смешно', loginToReact: 'Войдите чтобы реагировать', loginToComment: 'Войдите чтобы комментировать', loginToPost: 'Войдите чтобы публиковать', subscribe: 'Подписаться', unsubscribe: 'Отписаться', subscribers: 'Подписчики', editProfile: 'Редактировать профиль', notifications: 'Уведомления', noNotifications: 'Нет уведомлений', markAllAsRead: 'Отметить все как прочитанные', subscribedYou: 'подписался на вас', postedNew: 'опубликовал новый пост', feed: 'Лента', messages: 'Сообщения', noMessages: 'Нет сообщений', typeMessage: 'Напишите сообщение...', sendMessage: 'Написать сообщение'
+    login: 'Вход', register: 'Регистрация', logout: 'Выход', hi: 'Привет,', welcome: 'Добро пожаловать', postPlaceholder: 'Что нового?', post: 'Опубликовать', comments: 'Комментарии', writeComment: 'Написать комментарий', send: 'Отправить', create: 'Создать', cancel: 'Отмена', loginFailed: 'Ошибка входа', regFailed: 'Ошибка регистрации', loginTitle: 'Вход', registerTitle: 'Создать аккаунт', reactLike: 'Нравится', reactLove: 'Люблю', reactFunny: 'Смешно', loginToReact: 'Войдите чтобы реагировать', loginToComment: 'Войдите чтобы комментировать', loginToPost: 'Войдите чтобы публиковать', subscribe: 'Подписаться', unsubscribe: 'Отписаться', subscribers: 'Подписчики', editProfile: 'Редактировать профиль', notifications: 'Уведомления', noNotifications: 'Нет уведомлений', markAllAsRead: 'Отметить все как прочитанные', subscribedYou: 'подписался на вас', postedNew: 'опубликовал новый пост', feed: 'Лента', subscriptions: 'Подписки', messages: 'Сообщения', noMessages: 'Нет сообщений', typeMessage: 'Напишите сообщение...', sendMessage: 'Написать сообщение',
+    passwordRequirements: 'Минимум 8 символов, заглавная и строчная буква, цифра и спецсимвол',
+    password_min_length: 'Пароль должен быть не короче 8 символов',
+    password_need_upper: 'В пароле должна быть хотя бы одна заглавная буква',
+    password_need_lower: 'В пароле должна быть хотя бы одна строчная буква',
+    password_need_digit: 'В пароле должна быть хотя бы одна цифра',
+    password_need_special: 'В пароле должен быть хотя бы один спецсимвол (!@#$%^&* и т.д.)',
+    usernameRequired: 'Введите имя пользователя',
+    username_taken: 'Этот никнейм уже занят или слишком похож на существующий',
+    recordVoice: 'Записать голос',
+    stopRecord: 'Стоп',
+    recording: 'Идёт запись…',
+    voiceRecorded: 'Голосовое сообщение записано',
+    recordVoiceTitle: 'Записать голосовое сообщение',
+    noMic: 'Для записи нужен доступ к микрофону',
+    noPostsSubscriptions: 'Подпишитесь на пользователей, чтобы видеть их посты здесь',
+    viewInSubscriptions: 'Открыть в подписках'
   }
 };
+
+function validatePassword(p) {
+  if (p.length < 8) return { ok: false, error: 'password_min_length' };
+  if (!/[A-Z]/.test(p)) return { ok: false, error: 'password_need_upper' };
+  if (!/[a-z]/.test(p)) return { ok: false, error: 'password_need_lower' };
+  if (!/[0-9]/.test(p)) return { ok: false, error: 'password_need_digit' };
+  if (!/[^A-Za-z0-9]/.test(p)) return { ok: false, error: 'password_need_special' };
+  return { ok: true };
+}
 
 const state = {
   token: localStorage.getItem('token'),
@@ -37,27 +78,26 @@ function applyTheme(theme){
 function switchPage(page) {
   state.currentPage = page;
   const feedPage = document.getElementById('feed-page');
-  const messagesPage = document.getElementById('messages-page');
+  const subscriptionsPage = document.getElementById('subscriptions-page');
   const notificationsPage = document.getElementById('notifications-page');
   const feedTab = document.getElementById('tab-feed');
-  const messagesTab = document.getElementById('tab-messages');
+  const subscriptionsTab = document.getElementById('tab-subscriptions');
   const notificationsTab = document.getElementById('tab-notifications');
   
-  // Remove active from all
   feedPage?.classList.remove('active');
-  messagesPage?.classList.remove('active');
+  subscriptionsPage?.classList.remove('active');
   notificationsPage?.classList.remove('active');
   feedTab?.classList.remove('active');
-  messagesTab?.classList.remove('active');
+  subscriptionsTab?.classList.remove('active');
   notificationsTab?.classList.remove('active');
   
   if (page === 'feed') {
     feedPage?.classList.add('active');
     feedTab?.classList.add('active');
-  } else if (page === 'messages') {
-    messagesPage?.classList.add('active');
-    messagesTab?.classList.add('active');
-    loadDialogsPage();
+  } else if (page === 'subscriptions') {
+    subscriptionsPage?.classList.add('active');
+    subscriptionsTab?.classList.add('active');
+    loadSubscriptionsPosts();
   } else if (page === 'notifications') {
     notificationsPage?.classList.add('active');
     notificationsTab?.classList.add('active');
@@ -74,7 +114,7 @@ function renderAuth(){
   const area = document.getElementById('auth-area');
   area.innerHTML = '';
   const profileBtn = document.getElementById('profile-btn');
-  const messagesTab = document.getElementById('tab-messages');
+  const subscriptionsTab = document.getElementById('tab-subscriptions');
   const notificationsTab = document.getElementById('tab-notifications');
   if (!state.user) {
     const loginBtn = document.createElement('button'); loginBtn.textContent = t('login'); loginBtn.className='link';
@@ -83,7 +123,7 @@ function renderAuth(){
     area.appendChild(loginBtn); area.appendChild(regBtn);
     const cp = document.getElementById('create-post'); if (cp) cp.classList.add('hidden');
     if (profileBtn) profileBtn.classList.add('hidden');
-    if (messagesTab) messagesTab.classList.add('hidden');
+    if (subscriptionsTab) subscriptionsTab.classList.add('hidden');
     if (notificationsTab) notificationsTab.classList.add('hidden');
   } else {
     const span = document.createElement('div'); span.textContent = `${t('hi')} ${state.user.username}`;
@@ -94,12 +134,8 @@ function renderAuth(){
       profileBtn.classList.remove('hidden');
       profileBtn.onclick = () => showProfile(state.user.id);
     }
-    if (messagesTab) {
-      messagesTab.classList.remove('hidden');
-    }
-    if (notificationsTab) {
-      notificationsTab.classList.remove('hidden');
-    }
+    if (subscriptionsTab) subscriptionsTab.classList.remove('hidden');
+    if (notificationsTab) notificationsTab.classList.remove('hidden');
   }
   const welcomeEl = document.getElementById('welcome'); if (welcomeEl) welcomeEl.textContent = t('welcome');
 }
@@ -128,31 +164,60 @@ function showLogin(){
 }
 
 function showRegister(){
-  const { root } = makeModal(`<h2>${t('registerTitle')}</h2><input id="rg-user" placeholder="username"><input id="rg-pass" type="password" placeholder="password"><div class="actions"><button id="rg-cancel">${t('cancel')}</button><button id="rg-submit">${t('create')}</button></div>`);
+  const { root } = makeModal(`<h2>${t('registerTitle')}</h2><input id="rg-user" placeholder="username"><input id="rg-pass" type="password" placeholder="password"><div class="password-hint">${t('passwordRequirements')}</div><div class="actions"><button id="rg-cancel">${t('cancel')}</button><button id="rg-submit">${t('create')}</button></div>`);
   document.getElementById('rg-cancel').onclick = () => root.remove();
   document.getElementById('rg-submit').onclick = async () => {
-    const username = document.getElementById('rg-user').value;
+    const username = document.getElementById('rg-user').value.trim();
     const password = document.getElementById('rg-pass').value;
+    if (!username) return alert(t('usernameRequired'));
+    const pwCheck = validatePassword(password);
+    if (!pwCheck.ok) {
+      alert(t(pwCheck.error));
+      return;
+    }
     const res = await api.post('/register', { username, password });
-    if (res.token) setAuth(res.token, { username: res.username, id: res.id }); else alert(res.error || t('regFailed'));
+    if (res.token) setAuth(res.token, { username: res.username, id: res.id }); else alert(t(res.error) || res.error || t('regFailed'));
     root.remove();
   };
 }
 
-async function loadPosts(){
-  const headers = state.token ? { Authorization: 'Bearer ' + state.token } : {};
-  const posts = await fetch('/api/posts', { headers }).then(r => r.json());
-  const el = document.getElementById('posts'); el.innerHTML = '';
-  for (const p of posts){
-    const card = document.createElement('div'); card.className='card post';
-    const meta = document.createElement('div'); meta.className='meta'; 
-    const avatar = document.createElement('img'); avatar.src = p.avatar; avatar.className='avatar-small'; avatar.style.cursor='pointer';
+function refreshCurrentFeed() {
+  if (state.currentPage === 'subscriptions') loadSubscriptionsPosts();
+  else loadPosts();
+}
+
+const AUTO_REFRESH_INTERVAL_MS = 30000; // 30 seconds
+
+function autoRefreshCurrentPage() {
+  if (state.currentPage === 'feed') loadPosts();
+  else if (state.currentPage === 'subscriptions') loadSubscriptionsPosts();
+  else if (state.currentPage === 'notifications') loadNotificationsPage();
+}
+
+function startAutoRefresh() {
+  if (window._autoRefreshTimer) clearInterval(window._autoRefreshTimer);
+  window._autoRefreshTimer = setInterval(() => {
+    if (document.visibilityState !== 'hidden') autoRefreshCurrentPage();
+  }, AUTO_REFRESH_INTERVAL_MS);
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') autoRefreshCurrentPage();
+  });
+}
+
+function renderPostsInto(posts, containerId) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  el.innerHTML = '';
+  for (const p of posts) {
+    const card = document.createElement('div'); card.className = 'card post';
+    const meta = document.createElement('div'); meta.className = 'meta';
+    const avatar = document.createElement('img'); avatar.src = p.avatar; avatar.className = 'avatar-small'; avatar.style.cursor = 'pointer';
     avatar.onclick = () => showProfile(p.user_id);
-    const userLink = document.createElement('strong'); userLink.textContent = p.username; userLink.style.cursor='pointer';
+    const userLink = document.createElement('strong'); userLink.textContent = p.username; userLink.style.cursor = 'pointer';
     userLink.onclick = () => showProfile(p.user_id);
     const time = document.createElement('div'); time.textContent = new Date(p.created_at).toLocaleString();
     meta.appendChild(avatar); meta.appendChild(userLink); meta.appendChild(time);
-    const content = document.createElement('div'); content.className='content'; content.textContent = p.content;
+    const content = document.createElement('div'); content.className = 'content'; content.textContent = p.content;
     const imageDiv = document.createElement('div');
     if (p.image) {
       const img = document.createElement('img');
@@ -162,8 +227,16 @@ async function loadPosts(){
       img.style.marginTop = '8px';
       imageDiv.appendChild(img);
     }
-    const reactionsDiv = document.createElement('div'); reactionsDiv.className='reactions';
-    const types = ['like','love','funny','poop'];
+    if (p.audio) {
+      const audio = document.createElement('audio');
+      audio.controls = true;
+      audio.src = p.audio;
+      audio.style.width = '100%';
+      audio.style.marginTop = '8px';
+      imageDiv.appendChild(audio);
+    }
+    const reactionsDiv = document.createElement('div'); reactionsDiv.className = 'reactions';
+    const types = ['like', 'love', 'funny', 'poop'];
     types.forEach(typeKey => {
       const btn = document.createElement('button');
       const emoji = reactions[typeKey].emoji;
@@ -171,22 +244,48 @@ async function loadPosts(){
       btn.textContent = `${emoji} ${count}`;
       btn.title = reactions[typeKey].label[state.lang];
       btn.className = 'reaction-btn';
-      if (p.userReactions && p.userReactions.includes(typeKey)) {
-        btn.classList.add('active');
-      }
+      if (p.userReactions && p.userReactions.includes(typeKey)) btn.classList.add('active');
       btn.onclick = async () => {
         if (!state.token) return alert(t('loginToReact'));
         await api.post(`/posts/${p.id}/reaction`, { type: typeKey }, state.token);
-        loadPosts();
+        refreshCurrentFeed();
       };
       reactionsDiv.appendChild(btn);
     });
-    const commentsBtn = document.createElement('button'); commentsBtn.textContent = `💬 ${p.comments||0}`; commentsBtn.className = 'reaction-btn'; commentsBtn.title = t('comments');
+    const commentsBtn = document.createElement('button'); commentsBtn.textContent = `💬 ${p.comments || 0}`; commentsBtn.className = 'reaction-btn'; commentsBtn.title = t('comments');
     commentsBtn.onclick = () => toggleComments(card, p.id);
     reactionsDiv.appendChild(commentsBtn);
-
     card.appendChild(meta); card.appendChild(content); card.appendChild(imageDiv); card.appendChild(reactionsDiv);
     el.appendChild(card);
+  }
+}
+
+async function loadPosts() {
+  const headers = state.token ? { Authorization: 'Bearer ' + state.token } : {};
+  const posts = await fetch('/api/posts', { headers }).then(r => r.json());
+  renderPostsInto(posts, 'posts');
+}
+
+async function loadSubscriptionsPosts() {
+  const container = document.getElementById('subscriptions-posts');
+  if (!container) return;
+  if (!state.token) {
+    container.innerHTML = '';
+    return;
+  }
+  try {
+    const posts = await api.get('/posts/subscriptions', state.token);
+    if (!Array.isArray(posts)) {
+      container.innerHTML = '<p class="muted">' + (t('noPostsSubscriptions') || 'No posts from subscriptions yet') + '</p>';
+      return;
+    }
+    if (posts.length === 0) {
+      container.innerHTML = '<p class="muted" style="padding:24px;text-align:center">' + (t('noPostsSubscriptions') || 'Subscribe to users to see their posts here') + '</p>';
+      return;
+    }
+    renderPostsInto(posts, 'subscriptions-posts');
+  } catch (err) {
+    container.innerHTML = '<p class="muted" style="padding:24px">' + (t('noPostsSubscriptions') || 'Could not load subscriptions feed') + '</p>';
   }
 }
 
@@ -210,7 +309,7 @@ async function toggleComments(card, postId){
     const btn = document.createElement('button'); btn.textContent='⬆️'; btn.title=t('send'); btn.onclick = async () => {
       if (!state.token) return alert(t('loginToComment'));
       const res = await api.post(`/posts/${postId}/comments`, { content: textarea.value }, state.token);
-      if (res.id) { loadPosts(); }
+      if (res.id) { refreshCurrentFeed(); }
     };
     add.appendChild(textarea); add.appendChild(btn);
     list.appendChild(add);
@@ -243,30 +342,129 @@ document.getElementById('post-image').onchange = (e) => {
   }
 };
 
+let recordedVoiceBlob = null;
+let mediaRecorder = null;
+let recordStream = null;
+
+function updateVoiceHint() {
+  const hint = document.getElementById('audio-file-hint');
+  const statusEl = document.getElementById('voice-record-status');
+  if (recordedVoiceBlob) {
+    if (hint) hint.textContent = '🎤 ' + t('voiceRecorded');
+    if (statusEl) { statusEl.textContent = ''; statusEl.classList.add('hidden'); statusEl.classList.remove('recording', 'recorded'); }
+  } else {
+    const audioInput = document.getElementById('post-audio');
+    if (audioInput.files.length) {
+      if (hint) hint.textContent = '🎵 ' + audioInput.files[0].name;
+    } else {
+      if (hint) hint.remove();
+    }
+    if (statusEl) statusEl.classList.add('hidden');
+  }
+}
+
+document.getElementById('btn-audio').onclick = () => document.getElementById('post-audio').click();
+document.getElementById('post-audio').onchange = (e) => {
+  const file = e.target.files[0];
+  recordedVoiceBlob = null;
+  let hint = document.getElementById('audio-file-hint');
+  if (hint) hint.remove();
+  if (file) {
+    hint = document.createElement('div');
+    hint.id = 'audio-file-hint';
+    hint.style.fontSize = '12px';
+    hint.style.color = 'var(--muted)';
+    hint.style.marginTop = '4px';
+    hint.textContent = '🎵 ' + file.name;
+    document.getElementById('post-content').parentElement.insertBefore(hint, document.getElementById('post-content').nextElementSibling);
+  }
+  updateVoiceHint();
+};
+
+document.getElementById('btn-voice-record').onclick = async () => {
+  const btn = document.getElementById('btn-voice-record');
+  const statusEl = document.getElementById('voice-record-status');
+  if (mediaRecorder && mediaRecorder.state === 'recording') {
+    mediaRecorder.stop();
+    return;
+  }
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    recordStream = stream;
+    const chunks = [];
+    const mime = MediaRecorder.isTypeSupported('audio/webm;codecs=opus') ? 'audio/webm;codecs=opus' : 'audio/webm';
+    mediaRecorder = new MediaRecorder(stream);
+    mediaRecorder.ondataavailable = (e) => e.data.size && chunks.push(e.data);
+    mediaRecorder.onstop = () => {
+      recordStream.getTracks().forEach(t => t.stop());
+      recordStream = null;
+      mediaRecorder = null;
+      if (chunks.length) {
+        recordedVoiceBlob = new Blob(chunks, { type: mime });
+        let hint = document.getElementById('audio-file-hint');
+        if (!hint) {
+          hint = document.createElement('div');
+          hint.id = 'audio-file-hint';
+          hint.style.fontSize = '12px';
+          hint.style.color = 'var(--muted)';
+          hint.style.marginTop = '4px';
+          document.getElementById('post-content').parentElement.insertBefore(hint, document.getElementById('post-content').nextElementSibling);
+        }
+        hint.textContent = '🎤 ' + t('voiceRecorded');
+        document.getElementById('post-audio').value = '';
+      }
+      if (statusEl) { statusEl.classList.add('hidden'); statusEl.textContent = ''; statusEl.classList.remove('recording', 'recorded'); }
+      btn.title = t('recordVoiceTitle');
+      btn.textContent = '🎤';
+    };
+    mediaRecorder.start(200);
+    btn.textContent = '⏹';
+    btn.title = t('stopRecord');
+    if (statusEl) {
+      statusEl.textContent = t('recording');
+      statusEl.classList.remove('hidden');
+      statusEl.classList.add('recording');
+    }
+  } catch (err) {
+    console.error(err);
+    alert(t('noMic'));
+  }
+};
+
 document.getElementById('btn-post').onclick = async () => {
   if (!state.token) return alert(t('loginToPost'));
   const content = document.getElementById('post-content').value;
-  const fileInput = document.getElementById('post-image');
-  if (!content && !fileInput.files.length) return alert('Please write something or add an image');
+  const imageInput = document.getElementById('post-image');
+  const audioInput = document.getElementById('post-audio');
+  const hasImage = imageInput.files.length > 0;
+  const hasAudio = !!recordedVoiceBlob || audioInput.files.length > 0;
+  if (!content && !hasImage && !hasAudio) return alert('Please write something or add an image or audio');
   
   try {
     let res;
-    if (fileInput.files.length > 0) {
-      // Upload with image
+    if (hasImage || hasAudio) {
       const formData = new FormData();
       formData.append('content', content);
-      formData.append('image', fileInput.files[0]);
-      res = await api.postFormData('/posts/with-image', formData, state.token);
+      if (hasImage) formData.append('image', imageInput.files[0]);
+      if (recordedVoiceBlob) {
+        const ext = (recordedVoiceBlob.type || '').includes('ogg') ? 'ogg' : 'webm';
+        formData.append('audio', recordedVoiceBlob, 'voice.' + ext);
+      } else if (audioInput.files.length) formData.append('audio', audioInput.files[0]);
+      res = await api.postFormData('/posts/with-media', formData, state.token);
     } else {
-      // Upload without image
       res = await api.post('/posts', { content }, state.token);
     }
     
     if (res.id) {
       document.getElementById('post-content').value = '';
-      fileInput.value = '';
+      imageInput.value = '';
+      audioInput.value = '';
+      recordedVoiceBlob = null;
       const preview = document.getElementById('image-preview');
       if (preview) preview.remove();
+      const audioHint = document.getElementById('audio-file-hint');
+      if (audioHint) audioHint.remove();
+      updateVoiceHint();
       loadPosts();
     } else {
       alert(res.error || 'Error publishing post');
@@ -280,8 +478,8 @@ document.getElementById('btn-post').onclick = async () => {
 async function showProfile(userId) {
   const res = await api.get(`/users/${userId}`, state.token);
   if (!res.id) return alert('User not found');
-  const modal = document.createElement('div'); modal.className='modal-root';
-  const card = document.createElement('div'); card.className='modal-card'; card.style.width='500px'; card.style.maxHeight='80vh'; card.style.overflowY='auto';
+  const modal = document.createElement('div'); modal.className='modal-root profile-fullpage';
+  const card = document.createElement('div'); card.className='modal-card'; card.style.overflowY='auto';
   const close = document.createElement('button'); close.textContent = '✕'; close.style.position = 'absolute'; close.style.top='8px'; close.style.right='8px'; close.style.background='transparent'; close.style.border='none'; close.style.cursor='pointer'; close.style.fontSize='20px';
   close.onclick = () => modal.remove();
   const avatar = document.createElement('img'); avatar.src = res.avatar; avatar.className='avatar-large'; avatar.style.cursor = state.token && state.user.id === userId ? 'pointer' : 'default';
@@ -296,7 +494,6 @@ async function showProfile(userId) {
   
   // Add subscribe/unsubscribe button if not own profile
   let subscribeBtn = null;
-  let messageBtn = null;
   if (state.token && state.user.id !== userId) {
     subscribeBtn = document.createElement('button');
     subscribeBtn.textContent = res.isSubscribed ? t('unsubscribe') : t('subscribe');
@@ -311,18 +508,6 @@ async function showProfile(userId) {
       }
     };
     subscribersDiv.appendChild(subscribeBtn);
-    
-    messageBtn = document.createElement('button');
-    messageBtn.textContent = t('sendMessage');
-    messageBtn.className = 'btn-primary';
-    messageBtn.style.marginLeft = '8px';
-    messageBtn.onclick = () => {
-      modal.remove();
-      currentChatUserId = userId;
-      switchPage('messages');
-      setTimeout(() => openDialog(userId, res.username, res.avatar), 100);
-    };
-    subscribersDiv.appendChild(messageBtn);
   }
   
   const editBtn = state.token && state.user.id === userId ? document.createElement('button') : null;
@@ -381,7 +566,7 @@ function showEditProfile() {
 }
 
 async function showNotifications() {
-  const response = await api.get('/api/notifications', state.token);
+  const response = await api.get('/notifications', state.token);
   const notifications = Array.isArray(response) ? response : [];
   const modal = document.createElement('div'); modal.className='modal-root';
   const card = document.createElement('div'); card.className='modal-card'; card.style.width='500px'; card.style.maxHeight='80vh'; card.style.overflowY='auto';
@@ -390,7 +575,7 @@ async function showNotifications() {
   const title = document.createElement('h2'); title.textContent = t('notifications');
   const markAllBtn = document.createElement('button'); markAllBtn.textContent = t('markAllAsRead'); markAllBtn.style.marginBottom='12px';
   markAllBtn.onclick = async () => {
-    await api.post('/api/notifications/mark-all-read', {}, state.token);
+    await api.post('/notifications/mark-all-read', {}, state.token);
     modal.remove();
     showNotifications();
   };
@@ -467,7 +652,7 @@ async function showNotifications() {
         markBtn.style.fontSize = '16px';
         markBtn.onclick = async (e) => {
           e.stopPropagation();
-          await api.post(`/api/notifications/${n.id}/read`, {}, state.token);
+          await api.post(`/notifications/${n.id}/read`, {}, state.token);
           modal.remove();
           showNotifications();
         };
@@ -486,7 +671,7 @@ async function showNotifications() {
 }
 
 async function loadNotificationsPage() {
-  const response = await api.get('/api/notifications', state.token);
+  const response = await api.get('/notifications', state.token);
   const notifications = Array.isArray(response) ? response : [];
   const container = document.getElementById('notifications-container');
   
@@ -513,7 +698,7 @@ async function loadNotificationsPage() {
     markAllBtn.className = 'btn-primary';
     markAllBtn.style.marginBottom = '16px';
     markAllBtn.onclick = async () => {
-      await api.post('/api/notifications/mark-all-read', {}, state.token);
+      await api.post('/notifications/mark-all-read', {}, state.token);
       loadNotificationsPage();
     };
     container.appendChild(markAllBtn);
@@ -532,7 +717,7 @@ async function loadNotificationsPage() {
     avatar.className = 'avatar-small';
     avatar.style.cursor = 'pointer';
     avatar.style.flexShrink = '0';
-    avatar.onclick = () => showProfile(n.from_user_id);
+    avatar.onclick = (e) => { e.stopPropagation(); showProfile(n.from_user_id); };
     
     const textDiv = document.createElement('div');
     textDiv.style.flex = '1';
@@ -540,7 +725,7 @@ async function loadNotificationsPage() {
     const userName = document.createElement('strong');
     userName.textContent = n.username;
     userName.style.cursor = 'pointer';
-    userName.onclick = () => showProfile(n.from_user_id);
+    userName.onclick = (e) => { e.stopPropagation(); showProfile(n.from_user_id); };
     
     let message = '';
     if (n.type === 'subscribe') {
@@ -554,6 +739,12 @@ async function loadNotificationsPage() {
     
     const msgSpan = document.createElement('span');
     msgSpan.textContent = message;
+    if (n.type === 'new_post') {
+      msgSpan.style.cursor = 'pointer';
+      msgSpan.style.textDecoration = 'underline';
+      msgSpan.title = t('viewInSubscriptions') || 'View in Subscriptions';
+      msgSpan.onclick = (e) => { e.stopPropagation(); switchPage('subscriptions'); };
+    }
     
     const time = document.createElement('small');
     time.textContent = new Date(n.created_at).toLocaleString();
@@ -575,7 +766,7 @@ async function loadNotificationsPage() {
       markBtn.style.flexShrink = '0';
       markBtn.onclick = async (e) => {
         e.stopPropagation();
-        await api.post(`/api/notifications/${n.id}/read`, {}, state.token);
+        await api.post(`/notifications/${n.id}/read`, {}, state.token);
         loadNotificationsPage();
       };
       notifDiv.appendChild(markBtn);
@@ -585,104 +776,6 @@ async function loadNotificationsPage() {
     notifDiv.appendChild(textDiv);
     container.appendChild(notifDiv);
   }
-}
-
-let currentChatUserId = null;
-
-async function loadDialogsPage() {
-  const dialogs = await api.get('/api/dialogs', state.token);
-  const dialogsList = document.getElementById('dialogs-list');
-  dialogsList.innerHTML = '';
-  
-  if (!Array.isArray(dialogs) || dialogs.length === 0) {
-    const emptyMsg = document.createElement('div');
-    emptyMsg.style.textAlign = 'center';
-    emptyMsg.style.padding = '20px 10px';
-    emptyMsg.style.color = 'var(--muted)';
-    emptyMsg.textContent = t('noMessages');
-    dialogsList.appendChild(emptyMsg);
-    return;
-  }
-  
-  for (const dialog of dialogs) {
-    const dialogDiv = document.createElement('div');
-    dialogDiv.style.padding = '12px';
-    dialogDiv.style.borderBottom = '1px solid #e6f4ef';
-    dialogDiv.style.cursor = 'pointer';
-    dialogDiv.style.display = 'flex';
-    dialogDiv.style.gap = '8px';
-    dialogDiv.style.alignItems = 'center';
-    
-    const avatar = document.createElement('img');
-    avatar.src = dialog.avatar;
-    avatar.className = 'avatar-small';
-    
-    const info = document.createElement('div');
-    info.style.flex = '1';
-    
-    const name = document.createElement('div');
-    name.style.fontWeight = 'bold';
-    name.style.fontSize = '14px';
-    name.textContent = dialog.username;
-    
-    const lastMsg = document.createElement('small');
-    lastMsg.style.color = 'var(--muted)';
-    lastMsg.style.display = 'block';
-    lastMsg.textContent = dialog.last_message_content ? dialog.last_message_content.substring(0, 30) + '...' : '(no messages)';
-    
-    info.appendChild(name);
-    info.appendChild(lastMsg);
-    
-    dialogDiv.appendChild(avatar);
-    dialogDiv.appendChild(info);
-    
-    dialogDiv.onclick = () => openDialog(dialog.user_id, dialog.username, dialog.avatar);
-    dialogsList.appendChild(dialogDiv);
-  }
-}
-
-async function openDialog(userId, username, avatar) {
-  currentChatUserId = userId;
-  const header = document.getElementById('chat-header');
-  header.innerHTML = `<div style="display:flex;gap:8px;align-items:center"><img src="${avatar}" class="avatar-small"><div>${username}</div></div>`;
-  
-  await loadMessages(userId);
-}
-
-async function loadMessages(userId) {
-  const response = await api.get(`/api/messages/${userId}`, state.token);
-  const messages = Array.isArray(response) ? response : [];
-  const messagesList = document.getElementById('messages-list');
-  messagesList.innerHTML = '';
-  
-  for (const msg of messages) {
-    const msgDiv = document.createElement('div');
-    msgDiv.style.marginBottom = '12px';
-    msgDiv.style.display = 'flex';
-    msgDiv.style.justifyContent = msg.from_user_id === state.user.id ? 'flex-end' : 'flex-start';
-    
-    const msgBubble = document.createElement('div');
-    msgBubble.style.maxWidth = '70%';
-    msgBubble.style.padding = '8px 12px';
-    msgBubble.style.borderRadius = '12px';
-    msgBubble.style.backgroundColor = msg.from_user_id === state.user.id ? 'var(--green-500)' : '#e6f4ef';
-    msgBubble.style.color = msg.from_user_id === state.user.id ? 'white' : 'inherit';
-    msgBubble.textContent = msg.content;
-    
-    const timeDiv = document.createElement('small');
-    timeDiv.style.display = 'block';
-    timeDiv.style.marginTop = '4px';
-    timeDiv.style.color = 'var(--muted)';
-    timeDiv.style.fontSize = '12px';
-    timeDiv.textContent = new Date(msg.created_at).toLocaleTimeString();
-    
-    msgDiv.appendChild(msgBubble);
-    msgDiv.appendChild(timeDiv);
-    messagesList.appendChild(msgDiv);
-  }
-  
-  messagesList.scrollTop = messagesList.scrollHeight;
-  await api.post(`/api/messages/${userId}/read`, {}, state.token);
 }
 
 // language and theme wiring
@@ -711,10 +804,10 @@ if (feedTab) {
   feedTab.onclick = () => switchPage('feed');
 }
 
-const messagesTab = document.getElementById('tab-messages');
-if (messagesTab) {
-  messagesTab.textContent = `💬 ${t('messages')}`;
-  messagesTab.onclick = () => switchPage('messages');
+const subscriptionsTab = document.getElementById('tab-subscriptions');
+if (subscriptionsTab) {
+  subscriptionsTab.textContent = `👥 ${t('subscriptions')}`;
+  subscriptionsTab.onclick = () => switchPage('subscriptions');
 }
 
 const notificationsTab = document.getElementById('tab-notifications');
@@ -723,36 +816,13 @@ if (notificationsTab) {
   notificationsTab.onclick = () => switchPage('notifications');
 }
 
-// Set up message sending
-const sendBtn = document.getElementById('send-message-btn');
-if (sendBtn) {
-  sendBtn.textContent = t('send');
-  sendBtn.onclick = async () => {
-    if (!currentChatUserId) return alert(t('noMessages'));
-    const input = document.getElementById('message-input');
-    const content = input.value.trim();
-    if (!content) return;
-    
-    try {
-      const result = await api.post(`/api/messages/${currentChatUserId}`, { content }, state.token);
-      if (result && result.success) {
-        input.value = '';
-        await loadMessages(currentChatUserId);
-      } else {
-        console.error('Failed to send message:', result);
-        alert('Failed to send message');
-      }
-    } catch (err) {
-      console.error('Error sending message:', err);
-      alert('Error sending message: ' + (err.message || 'Unknown error'));
-    }
-  };
+const voiceRecordBtn = document.getElementById('btn-voice-record');
+if (voiceRecordBtn) {
+  voiceRecordBtn.title = t('recordVoiceTitle');
+  if (typeof MediaRecorder === 'undefined') voiceRecordBtn.style.display = 'none';
 }
 
-const msgInput = document.getElementById('message-input');
-if (msgInput) {
-  msgInput.placeholder = t('typeMessage');
-}
-
+switchPage('feed');
 renderAuth();
 loadPosts();
+startAutoRefresh();
