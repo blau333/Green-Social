@@ -37,6 +37,27 @@ const postImageStorage = multer.diskStorage({
 });
 const uploadPostImage = multer({ storage: postImageStorage, limits: { fileSize: 10 * 1024 * 1024 } });
 
+const postMediaStorage = multer.diskStorage({
+  destination: async (req, file, cb) => {
+    await fs.mkdir(uploadDir, { recursive: true });
+    cb(null, uploadDir);
+  },
+  filename: (req, file, cb) => {
+    const prefix = file.fieldname === 'audio' ? 'audio-' : 'post-';
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, prefix + uniqueSuffix + path.extname(file.originalname));
+  }
+});
+const uploadPostMedia = multer({
+  storage: postMediaStorage,
+  limits: { fileSize: 15 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    if (file.fieldname === 'image' && !file.mimetype.startsWith('image/')) return cb(new Error('Only images allowed for image field'));
+    if (file.fieldname === 'audio' && !file.mimetype.startsWith('audio/')) return cb(new Error('Only audio files allowed'));
+    cb(null, true);
+  }
+}).fields([{ name: 'image', maxCount: 1 }, { name: 'audio', maxCount: 1 }]);
+
 async function initDb() {
   const db = await open({ filename: path.join(__dirname, 'data.db'), driver: sqlite3.Database });
   await db.exec(`
@@ -105,6 +126,9 @@ async function initDb() {
       FOREIGN KEY(to_user_id) REFERENCES users(id)
     );
   `);
+  try {
+    await db.run('ALTER TABLE posts ADD COLUMN audio TEXT DEFAULT NULL');
+  } catch (e) { /* column may already exist */ }
   return db;
 }
 
@@ -131,24 +155,38 @@ function authMiddleware(req, res, next) {
   app.use(express.static(path.join(__dirname, 'public')));
   app.use('/uploads', express.static(uploadDir));
 
+  function validatePassword(p) {
+    if (p.length < 8) return { ok: false, error: 'password_min_length' };
+    if (!/[A-Z]/.test(p)) return { ok: false, error: 'password_need_upper' };
+    if (!/[a-z]/.test(p)) return { ok: false, error: 'password_need_lower' };
+    if (!/[0-9]/.test(p)) return { ok: false, error: 'password_need_digit' };
+    if (!/[^A-Za-z0-9]/.test(p)) return { ok: false, error: 'password_need_special' };
+    return { ok: true };
+  }
+
   app.post('/api/register', async (req, res) => {
     const { username, password } = req.body;
     if (!username || !password) return res.status(400).json({ error: 'username and password required' });
+    const pwCheck = validatePassword(password);
+    if (!pwCheck.ok) return res.status(400).json({ error: pwCheck.error });
+    const existing = await db.get('SELECT id FROM users WHERE LOWER(username) = LOWER(?)', username.trim());
+    if (existing) return res.status(400).json({ error: 'username_taken' });
     const hash = await bcrypt.hash(password, 10);
+    const name = username.trim();
     try {
-      const result = await db.run('INSERT INTO users (username, password_hash) VALUES (?, ?)', username, hash);
+      const result = await db.run('INSERT INTO users (username, password_hash) VALUES (?, ?)', name, hash);
       const id = result.lastID;
-      const token = jwt.sign({ id, username }, JWT_SECRET);
-      res.json({ token, username, id });
+      const token = jwt.sign({ id, username: name }, JWT_SECRET);
+      res.json({ token, username: name, id });
     } catch (err) {
-      res.status(400).json({ error: 'username taken' });
+      res.status(400).json({ error: 'username_taken' });
     }
   });
 
   app.post('/api/login', async (req, res) => {
     const { username, password } = req.body;
     if (!username || !password) return res.status(400).json({ error: 'username and password required' });
-    const user = await db.get('SELECT * FROM users WHERE username = ?', username);
+    const user = await db.get('SELECT * FROM users WHERE LOWER(username) = LOWER(?)', username.trim());
     if (!user) return res.status(400).json({ error: 'invalid credentials' });
     const ok = await bcrypt.compare(password, user.password_hash);
     if (!ok) return res.status(400).json({ error: 'invalid credentials' });
@@ -169,7 +207,7 @@ function authMiddleware(req, res, next) {
       }
     }
     const posts = await db.all(`
-      SELECT p.id, p.content, p.image, p.created_at, u.id as user_id, u.username, u.avatar
+      SELECT p.id, p.content, p.image, p.audio, p.created_at, u.id as user_id, u.username, u.avatar
       FROM posts p
       JOIN users u ON u.id = p.user_id
       ORDER BY p.created_at DESC
@@ -187,6 +225,25 @@ function authMiddleware(req, res, next) {
     res.json(results);
   });
 
+  app.get('/api/posts/subscriptions', authMiddleware, async (req, res) => {
+    const userId = req.user.id;
+    const posts = await db.all(`
+      SELECT p.id, p.content, p.image, p.audio, p.created_at, u.id as user_id, u.username, u.avatar
+      FROM posts p
+      JOIN users u ON u.id = p.user_id
+      WHERE p.user_id IN (SELECT subscribed_to_id FROM subscriptions WHERE subscriber_id = ?)
+      ORDER BY p.created_at DESC
+    `, userId);
+    const results = [];
+    for (const p of posts) {
+      const reactions = await db.all('SELECT type, COUNT(*) as count FROM reactions WHERE post_id = ? GROUP BY type', p.id);
+      const comments = await db.get('SELECT COUNT(*) as count FROM comments WHERE post_id = ?', p.id);
+      const userReactions = await db.all('SELECT type FROM reactions WHERE post_id = ? AND user_id = ?', p.id, userId);
+      results.push({ ...p, reactions: reactions.reduce((acc, r) => ({ ...acc, [r.type]: r.count }), {}), userReactions: userReactions.map(r => r.type), comments: comments.count });
+    }
+    res.json(results);
+  });
+
   app.post('/api/posts', authMiddleware, async (req, res) => {
     try {
       const { content } = req.body;
@@ -194,8 +251,8 @@ function authMiddleware(req, res, next) {
         return res.status(400).json({ error: 'content required' });
       }
       const created_at = Date.now();
-      const result = await db.run('INSERT INTO posts (user_id, content, image, created_at) VALUES (?, ?, ?, ?)', req.user.id, content, null, created_at);
-      const post = await db.get('SELECT p.id, p.content, p.image, p.created_at, u.id as user_id, u.username, u.avatar FROM posts p JOIN users u ON u.id = p.user_id WHERE p.id = ?', result.lastID);
+      const result = await db.run('INSERT INTO posts (user_id, content, image, audio, created_at) VALUES (?, ?, ?, ?, ?)', req.user.id, content, null, null, created_at);
+      const post = await db.get('SELECT p.id, p.content, p.image, p.audio, p.created_at, u.id as user_id, u.username, u.avatar FROM posts p JOIN users u ON u.id = p.user_id WHERE p.id = ?', result.lastID);
       
       // Notify all subscribers
       const subscribers = await db.all('SELECT subscriber_id FROM subscriptions WHERE subscribed_to_id = ?', req.user.id);
@@ -212,17 +269,15 @@ function authMiddleware(req, res, next) {
 
   app.post('/api/posts/with-image', authMiddleware, uploadPostImage.single('image'), async (req, res) => {
     try {
-      console.log('POST /api/posts/with-image - Body:', req.body, 'File:', req.file);
       const { content } = req.body;
       if (!content && !req.file) {
         return res.status(400).json({ error: 'content or image required' });
       }
       const created_at = Date.now();
       const imageUrl = req.file ? '/uploads/' + req.file.filename : null;
-      const result = await db.run('INSERT INTO posts (user_id, content, image, created_at) VALUES (?, ?, ?, ?)', req.user.id, content || '', imageUrl, created_at);
-      const post = await db.get('SELECT p.id, p.content, p.image, p.created_at, u.id as user_id, u.username, u.avatar FROM posts p JOIN users u ON u.id = p.user_id WHERE p.id = ?', result.lastID);
+      const result = await db.run('INSERT INTO posts (user_id, content, image, audio, created_at) VALUES (?, ?, ?, ?, ?)', req.user.id, content || '', imageUrl, null, created_at);
+      const post = await db.get('SELECT p.id, p.content, p.image, p.audio, p.created_at, u.id as user_id, u.username, u.avatar FROM posts p JOIN users u ON u.id = p.user_id WHERE p.id = ?', result.lastID);
       
-      // Notify all subscribers
       const subscribers = await db.all('SELECT subscriber_id FROM subscriptions WHERE subscribed_to_id = ?', req.user.id);
       for (const sub of subscribers) {
         await db.run('INSERT INTO notifications (user_id, type, from_user_id, post_id, created_at) VALUES (?, ?, ?, ?, ?)', sub.subscriber_id, 'new_post', req.user.id, result.lastID, created_at);
@@ -231,6 +286,32 @@ function authMiddleware(req, res, next) {
       res.json(post);
     } catch (err) {
       console.error('Error in POST /api/posts/with-image:', err);
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.post('/api/posts/with-media', authMiddleware, uploadPostMedia, async (req, res) => {
+    try {
+      const { content } = req.body || {};
+      const imageFile = req.files && req.files.image && req.files.image[0];
+      const audioFile = req.files && req.files.audio && req.files.audio[0];
+      if (!content && !imageFile && !audioFile) {
+        return res.status(400).json({ error: 'content, image or audio required' });
+      }
+      const created_at = Date.now();
+      const imageUrl = imageFile ? '/uploads/' + imageFile.filename : null;
+      const audioUrl = audioFile ? '/uploads/' + audioFile.filename : null;
+      const result = await db.run('INSERT INTO posts (user_id, content, image, audio, created_at) VALUES (?, ?, ?, ?, ?)', req.user.id, content || '', imageUrl, audioUrl, created_at);
+      const post = await db.get('SELECT p.id, p.content, p.image, p.audio, p.created_at, u.id as user_id, u.username, u.avatar FROM posts p JOIN users u ON u.id = p.user_id WHERE p.id = ?', result.lastID);
+      
+      const subscribers = await db.all('SELECT subscriber_id FROM subscriptions WHERE subscribed_to_id = ?', req.user.id);
+      for (const sub of subscribers) {
+        await db.run('INSERT INTO notifications (user_id, type, from_user_id, post_id, created_at) VALUES (?, ?, ?, ?, ?)', sub.subscriber_id, 'new_post', req.user.id, result.lastID, created_at);
+      }
+      
+      res.json(post);
+    } catch (err) {
+      console.error('Error in POST /api/posts/with-media:', err);
       res.status(500).json({ error: err.message });
     }
   });
