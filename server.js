@@ -352,6 +352,50 @@ function authMiddleware(req, res, next) {
     res.json(comment);
   });
 
+  app.delete('/api/posts/:id', authMiddleware, async (req, res) => {
+    const postId = req.params.id;
+    try {
+      const post = await db.get('SELECT user_id, image, audio FROM posts WHERE id = ?', postId);
+      if (!post) {
+        return res.status(404).json({ error: 'Post not found' });
+      }
+      if (post.user_id !== req.user.id) {
+        return res.status(403).json({ error: 'You can only delete your own posts' });
+      }
+      
+      // Delete related data
+      await db.run('DELETE FROM reactions WHERE post_id = ?', postId);
+      await db.run('DELETE FROM comments WHERE post_id = ?', postId);
+      await db.run('DELETE FROM notifications WHERE post_id = ?', postId);
+      
+      // Delete post
+      await db.run('DELETE FROM posts WHERE id = ?', postId);
+      
+      // Delete files if they exist
+      if (post.image) {
+        const imagePath = path.join(__dirname, post.image);
+        try {
+          await fs.unlink(imagePath);
+        } catch (err) {
+          console.error('Error deleting image file:', err);
+        }
+      }
+      if (post.audio) {
+        const audioPath = path.join(__dirname, post.audio);
+        try {
+          await fs.unlink(audioPath);
+        } catch (err) {
+          console.error('Error deleting audio file:', err);
+        }
+      }
+      
+      res.json({ success: true });
+    } catch (err) {
+      console.error('Error in DELETE /api/posts/:id:', err);
+      res.status(500).json({ error: err.message });
+    }
+  });
+
   app.get('/api/users/:id', async (req, res) => {
     const userId = req.params.id;
     let currentUserId = null;

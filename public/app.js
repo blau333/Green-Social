@@ -1,16 +1,10 @@
-const google = window.google;
-const api = {
-  req: (path, opts = {}) => fetch('/api' + path, opts).then(r => r.json()),
-  get: (path, token) => api.req(path, token ? { headers: { Authorization: 'Bearer ' + token } } : {}),
-  post: (path, body, token) => api.req(path, { method: 'POST', headers: Object.assign({ 'Content-Type': 'application/json' }, token ? { Authorization: 'Bearer ' + token } : {}), body: JSON.stringify(body) }),
-  postFormData: (path, formData, token) => api.req(path, { method: 'POST', headers: Object.assign({}, token ? { Authorization: 'Bearer ' + token } : {}), body: formData })
-};
 
 const reactions = {
   like: { emoji: '👍', label: { en: 'Like', ru: 'Лайк' } },
   love: { emoji: '❤️', label: { en: 'Love', ru: 'Нравиться' } },
   funny: { emoji: '😂', label: { en: 'Funny', ru: "хаха" } },
-  poop: { emoji: '💩', label: { en: 'Poop', ru: 'Фу' } }
+  poop: { emoji: '💩', label: { en: 'Poop', ru: 'Фу' } },
+  clown: { emoji: '🤡', label: { en: 'Clown', ru: 'Ужас' }}
 };
 
 const i18n = {
@@ -31,10 +25,13 @@ const i18n = {
     recordVoiceTitle: 'Record voice message',
     noMic: 'Microphone access is required for recording',
     noPostsSubscriptions: 'Subscribe to users to see their posts here',
-    viewInSubscriptions: 'View in Subscriptions'
+    viewInSubscriptions: 'View in Subscriptions',
+    DeletePost: 'Delete Post',
+    deleteConfirm: 'Delete this post?',
+    deleteError: 'Failed to delete post'
   },
   ru: {
-    login: 'Вход', register: 'Регистрация', logout: 'Выход', hi: 'Привет,', welcome: 'Добро пожаловать', postPlaceholder: 'Что нового?', post: 'Опубликовать', comments: 'Комментарии', writeComment: 'Написать комментарий', send: 'Отправить', create: 'Создать', cancel: 'Отмена', loginFailed: 'Ошибка входа', regFailed: 'Ошибка регистрации', loginTitle: 'Вход', registerTitle: 'Создать аккаунт', reactLike: 'Нравится', reactLove: 'Люблю', reactFunny: 'Смешно', loginToReact: 'Войдите чтобы реагировать', loginToComment: 'Войдите чтобы комментировать', loginToPost: 'Войдите чтобы публиковать', subscribe: 'Подписаться', unsubscribe: 'Отписаться', subscribers: 'Подписчики', editProfile: 'Редактировать профиль', notifications: 'Уведомления', noNotifications: 'Нет уведомлений', markAllAsRead: 'Отметить все как прочитанные', subscribedYou: 'подписался на вас', postedNew: 'опубликовал новый пост', feed: 'Лента', subscriptions: 'Подписки', messages: 'Сообщения', noMessages: 'Нет сообщений', typeMessage: 'Напишите сообщение...', sendMessage: 'Написать сообщение',
+    login: 'Вход', register: 'Регистрация', logout: 'Выход', hi: 'Йоу,', welcome: 'Добро пожаловать', postPlaceholder: 'Что нового?', post: 'Опубликовать', comments: 'Комментарии', writeComment: 'Написать комментарий', send: 'Отправить', create: 'Создать', cancel: 'Отмена', loginFailed: 'Ошибка входа', regFailed: 'Ошибка регистрации', loginTitle: 'Вход', registerTitle: 'Создать аккаунт', reactLike: 'Нравится', reactLove: 'Люблю', reactFunny: 'Смешно', loginToReact: 'Войдите чтобы реагировать', loginToComment: 'Войдите чтобы комментировать', loginToPost: 'Войдите чтобы публиковать', subscribe: 'Подписаться', unsubscribe: 'Отписаться', subscribers: 'Подписчики', editProfile: 'Редактировать профиль', notifications: 'Уведомления', noNotifications: 'Нет уведомлений', markAllAsRead: 'Отметить все как прочитанные', subscribedYou: 'подписался на вас', postedNew: 'опубликовал новый пост', feed: 'Лента', subscriptions: 'Подписки', messages: 'Сообщения', noMessages: 'Нет сообщений', typeMessage: 'Напишите сообщение...', sendMessage: 'Написать сообщение',
     passwordRequirements: 'Минимум 8 символов, заглавная и строчная буква, цифра и спецсимвол',
     password_min_length: 'Пароль должен быть не короче 8 символов',
     password_need_upper: 'В пароле должна быть хотя бы одна заглавная буква',
@@ -50,7 +47,10 @@ const i18n = {
     recordVoiceTitle: 'Записать голосовое сообщение',
     noMic: 'Для записи нужен доступ к микрофону',
     noPostsSubscriptions: 'Подпишитесь на пользователей, чтобы видеть их посты здесь',
-    viewInSubscriptions: 'Открыть в подписках'
+    viewInSubscriptions: 'Открыть в подписках',
+    DeletePost: 'Удалить публикацию',
+    deleteConfirm: 'Удалить этот пост?',
+    deleteError: 'Не удалось удалить пост'
   }
 };
 
@@ -68,6 +68,37 @@ const state = {
   user: JSON.parse(localStorage.getItem('user') || 'null'),
   lang: localStorage.getItem('lang') || (navigator.language && navigator.language.startsWith('ru') ? 'ru' : 'en'),
   currentPage: 'feed'
+};
+
+const api = {
+  async get(path, token) {
+    const headers = {};
+    if (token) headers.Authorization = 'Bearer ' + token;
+    const r = await fetch('/api' + path, { headers });
+    return r.json();
+  },
+  async post(path, body, token) {
+    const headers = { 'Content-Type': 'application/json' };
+    if (token) headers.Authorization = 'Bearer ' + token;
+    const r = await fetch('/api' + path, { method: 'POST', headers, body: JSON.stringify(body) });
+    return r.json();
+  },
+  async postFormData(path, formData, token) {
+    const headers = {};
+    if (token) headers.Authorization = 'Bearer ' + token;
+    const r = await fetch('/api' + path, { method: 'POST', headers, body: formData });
+    return r.json();
+  },
+  async delete(path, token) {
+    const headers = {};
+    if (token) headers.Authorization = 'Bearer ' + token;
+    const r = await fetch('/api' + path, { method: 'DELETE', headers });
+    if (!r.ok) {
+      const error = await r.json().catch(() => ({ error: 'Delete failed' }));
+      throw new Error(error.error || 'Delete failed');
+    }
+    return r.json().catch(() => ({ success: true }));
+  }
 };
 
 function applyTheme(theme){
@@ -114,8 +145,6 @@ function renderAuth(){
   const area = document.getElementById('auth-area');
   area.innerHTML = '';
   const profileBtn = document.getElementById('profile-btn');
-  const subscriptionsTab = document.getElementById('tab-subscriptions');
-  const notificationsTab = document.getElementById('tab-notifications');
   if (!state.user) {
     const loginBtn = document.createElement('button'); loginBtn.textContent = t('login'); loginBtn.className='link';
     loginBtn.onclick = showLogin;
@@ -123,8 +152,6 @@ function renderAuth(){
     area.appendChild(loginBtn); area.appendChild(regBtn);
     const cp = document.getElementById('create-post'); if (cp) cp.classList.add('hidden');
     if (profileBtn) profileBtn.classList.add('hidden');
-    if (subscriptionsTab) subscriptionsTab.classList.add('hidden');
-    if (notificationsTab) notificationsTab.classList.add('hidden');
   } else {
     const span = document.createElement('div'); span.textContent = `${t('hi')} ${state.user.username}`;
     const out = document.createElement('button'); out.textContent=t('logout'); out.onclick = () => clearAuth();
@@ -134,8 +161,6 @@ function renderAuth(){
       profileBtn.classList.remove('hidden');
       profileBtn.onclick = () => showProfile(state.user.id);
     }
-    if (subscriptionsTab) subscriptionsTab.classList.remove('hidden');
-    if (notificationsTab) notificationsTab.classList.remove('hidden');
   }
   const welcomeEl = document.getElementById('welcome'); if (welcomeEl) welcomeEl.textContent = t('welcome');
 }
@@ -208,17 +233,60 @@ function renderPostsInto(posts, containerId) {
   const el = document.getElementById(containerId);
   if (!el) return;
   el.innerHTML = '';
+
   for (const p of posts) {
-    const card = document.createElement('div'); card.className = 'card post';
-    const meta = document.createElement('div'); meta.className = 'meta';
-    const avatar = document.createElement('img'); avatar.src = p.avatar; avatar.className = 'avatar-small'; avatar.style.cursor = 'pointer';
+    const card = document.createElement('div');
+    card.className = 'card post';
+    card.id = `post-${p.id}`;
+
+    const meta = document.createElement('div');
+    meta.className = 'meta';
+
+    const avatar = document.createElement('img');
+    avatar.src = p.avatar;
+    avatar.className = 'avatar-small';
+    avatar.style.cursor = 'pointer';
     avatar.onclick = () => showProfile(p.user_id);
-    const userLink = document.createElement('strong'); userLink.textContent = p.username; userLink.style.cursor = 'pointer';
+
+    const userLink = document.createElement('strong');
+    userLink.textContent = p.username;
+    userLink.style.cursor = 'pointer';
     userLink.onclick = () => showProfile(p.user_id);
-    const time = document.createElement('div'); time.textContent = new Date(p.created_at).toLocaleString();
-    meta.appendChild(avatar); meta.appendChild(userLink); meta.appendChild(time);
-    const content = document.createElement('div'); content.className = 'content'; content.textContent = p.content;
+
+    const time = document.createElement('div');
+    time.textContent = new Date(p.created_at).toLocaleString();
+
+    meta.appendChild(avatar);
+    meta.appendChild(userLink);
+    meta.appendChild(time);
+
+    const content = document.createElement('div');
+    content.className = 'content';
+    content.textContent = p.content;
+
+    if (state.user && state.user.id === p.user_id) {
+      const deleteBtn = document.createElement('button');
+      deleteBtn.textContent = '🚮';
+      deleteBtn.className = 'delete-btn';
+      deleteBtn.title = t('DeletePost');
+      deleteBtn.onclick = async () => {
+        if (!confirm(t('deleteConfirm'))) return;
+        try {
+          await api.delete(`/posts/${p.id}`, state.token);
+          document.getElementById(`post-${p.id}`)?.remove();
+          refreshCurrentFeed();
+        } catch (err) {
+          alert(t('deleteError') + ': ' + err.message);
+          console.error(err);
+        }
+      };
+      card.appendChild(deleteBtn);
+    }
+
+    card.appendChild(meta);
+    card.appendChild(content);
     const imageDiv = document.createElement('div');
+    imageDiv.className = 'post-media';
     if (p.image) {
       const img = document.createElement('img');
       img.src = p.image;
@@ -236,7 +304,7 @@ function renderPostsInto(posts, containerId) {
       imageDiv.appendChild(audio);
     }
     const reactionsDiv = document.createElement('div'); reactionsDiv.className = 'reactions';
-    const types = ['like', 'love', 'funny', 'poop'];
+    const types = ['like', 'love', 'funny', 'poop', 'clown'];
     types.forEach(typeKey => {
       const btn = document.createElement('button');
       const emoji = reactions[typeKey].emoji;
@@ -255,7 +323,8 @@ function renderPostsInto(posts, containerId) {
     const commentsBtn = document.createElement('button'); commentsBtn.textContent = `💬 ${p.comments || 0}`; commentsBtn.className = 'reaction-btn'; commentsBtn.title = t('comments');
     commentsBtn.onclick = () => toggleComments(card, p.id);
     reactionsDiv.appendChild(commentsBtn);
-    card.appendChild(meta); card.appendChild(content); card.appendChild(imageDiv); card.appendChild(reactionsDiv);
+    card.appendChild(imageDiv);
+    card.appendChild(reactionsDiv);
     el.appendChild(card);
   }
 }
@@ -806,13 +875,13 @@ if (feedTab) {
 
 const subscriptionsTab = document.getElementById('tab-subscriptions');
 if (subscriptionsTab) {
-  subscriptionsTab.textContent = `👥 ${t('subscriptions')}`;
+  subscriptionsTab.textContent = `🧑‍🤝‍🧑 ${t('subscriptions')}`;
   subscriptionsTab.onclick = () => switchPage('subscriptions');
 }
 
 const notificationsTab = document.getElementById('tab-notifications');
 if (notificationsTab) {
-  notificationsTab.textContent = `🔔 ${t('notifications')}`;
+  notificationsTab.textContent = `🪧 ${t('notifications')}`;
   notificationsTab.onclick = () => switchPage('notifications');
 }
 
