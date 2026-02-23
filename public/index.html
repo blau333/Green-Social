@@ -12,15 +12,25 @@
   <div class="container">
     <header>
       <div class="header-left">
-        <h1>Green-Social</h1>
-        <a href="/">Главная страница</a>
-        <div id="welcome" class="welcome-text">Добро пожаловать <username>Йоу</username></div>
+        <div class="header-title-row">
+          <img id="site-logo" class="site-logo hidden" src="" alt="">
+          <span class="logo-fallback">🌿</span>
+          <h1>Green-Social</h1>
+          <input id="logo-file" type="file" accept="image/*" style="display:none">
+          <button id="btn-add-logo" type="button" class="btn-add-logo" title="Добавить логотип">📷</button>
+        </div>
+        <div id="welcome" class="welcome-text"></div>
+        <div id="category-bar" class="category-bar"></div>
       </div>
       <div class="header-right">
+        <div class="user-search-row">
+          <input id="user-id-search" type="number" min="1" placeholder="User ID" aria-label="Search by user ID">
+          <button id="btn-search-user" type="button" class="btn-search-user" title="Search user">🔍</button>
+        </div>
         <div class="controls">
           <select id="lang-select" aria-label="language-select">
-            <option value="ru">Русский</option>
-            <option value="en">English</option>
+            <option value="ru">Рус</option>
+            <option value="en">Eng</option>
           </select>
           <button id="theme-toggle" title="Toggle theme">Dark</button>
           <button id="profile-btn" class="hidden" title="View Profile">Profile</button>
@@ -33,6 +43,7 @@
       <section id="feed-page" class="page">
         <section id="create-post" class="card hidden">
           <textarea id="post-content" placeholder="Hows it going?"></textarea>
+          <input id="post-category" class="post-category-input" placeholder="Category (optional)">
           <div style="margin-bottom:8px">
             <input id="post-image" type="file" accept="image/*" style="display:none">
             <input id="post-audio" type="file" accept="audio/*" style="display:none">
@@ -63,7 +74,7 @@
       <button id="tab-notifications" class="tab-btn">🔔</button>
     </nav>
     <footer>
-      <p>Created by blau3</p>
+      <p>Created by blau3 and Komi</p>
       <a href="https://t.me/blau030" target="_blank">
         <img src="telegram.png" alt="Telegram" width="40">
       </a>

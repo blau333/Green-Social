@@ -28,7 +28,11 @@ const i18n = {
     viewInSubscriptions: 'View in Subscriptions',
     DeletePost: 'Delete Post',
     deleteConfirm: 'Delete this post?',
-    deleteError: 'Failed to delete post'
+    deleteError: 'Failed to delete post',
+    searchUserById: 'Search user',
+    userIdPlaceholder: 'User ID',
+    userNotFound: 'User not found',
+    profileId: 'ID'
   },
   ru: {
     login: 'Вход', register: 'Регистрация', logout: 'Выход', hi: 'Йоу,', welcome: 'Добро пожаловать', postPlaceholder: 'Что нового?', post: 'Опубликовать', comments: 'Комментарии', writeComment: 'Написать комментарий', send: 'Отправить', create: 'Создать', cancel: 'Отмена', loginFailed: 'Ошибка входа', regFailed: 'Ошибка регистрации', loginTitle: 'Вход', registerTitle: 'Создать аккаунт', reactLike: 'Нравится', reactLove: 'Люблю', reactFunny: 'Смешно', loginToReact: 'Войдите чтобы реагировать', loginToComment: 'Войдите чтобы комментировать', loginToPost: 'Войдите чтобы публиковать', subscribe: 'Подписаться', unsubscribe: 'Отписаться', subscribers: 'Подписчики', editProfile: 'Редактировать профиль', notifications: 'Уведомления', noNotifications: 'Нет уведомлений', markAllAsRead: 'Отметить все как прочитанные', subscribedYou: 'подписался на вас', postedNew: 'опубликовал новый пост', feed: 'Лента', subscriptions: 'Подписки', messages: 'Сообщения', noMessages: 'Нет сообщений', typeMessage: 'Напишите сообщение...', sendMessage: 'Написать сообщение',
@@ -50,25 +54,27 @@ const i18n = {
     viewInSubscriptions: 'Открыть в подписках',
     DeletePost: 'Удалить публикацию',
     deleteConfirm: 'Удалить этот пост?',
-    deleteError: 'Не удалось удалить пост'
+    deleteError: 'Не удалось удалить пост',
+    searchUserById: 'Найти пользователя',
+    userIdPlaceholder: 'ID пользователя',
+    userNotFound: 'Пользователь не найден',
+    profileId: 'ID'
   }
 };
 
 function validatePassword(p) {
-  if (p.length < 8) return { ok: false, error: 'password_min_length' };
+  if (p.length < 6) return { ok: false, error: 'password_min_length' };
   if (!/[A-Z]/.test(p)) return { ok: false, error: 'password_need_upper' };
   if (!/[a-z]/.test(p)) return { ok: false, error: 'password_need_lower' };
   if (!/[0-9]/.test(p)) return { ok: false, error: 'password_need_digit' };
-  if (!/[^A-Za-z0-9]/.test(p)) return { ok: false, error: 'password_need_special' };
   return { ok: true };
 }
 
-function generateStrongPassword(length=13) {
+function generateStrongPassword(length=8) {
   const upper = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
   const lower = 'abcdefghijklmnopqrstuvwxyz'
   const numbers = '0123456789'
-  const specials = '!@#$%^&*()_+[]{}<>?'
-  const allChars = upper + lower + numbers + specials;
+  const allChars = upper + lower + numbers;
 
   if (length<4) length=4;
 
@@ -102,8 +108,11 @@ const state = {
   token: localStorage.getItem('token'),
   user: JSON.parse(localStorage.getItem('user') || 'null'),
   lang: localStorage.getItem('lang') || (navigator.language && navigator.language.startsWith('ru') ? 'ru' : 'en'),
-  currentPage: 'feed'
+  currentPage: 'feed',
+  currentCategoryFilter: null
 };
+
+let allFeedPosts = [];
 
 const api = {
   async get(path, token) {
@@ -328,9 +337,32 @@ function renderPostsInto(posts, containerId) {
     const time = document.createElement('div');
     time.textContent = new Date(p.created_at).toLocaleString();
 
-    meta.appendChild(avatar);
-    meta.appendChild(userLink);
-    meta.appendChild(time);
+    const leftMeta = document.createElement('div');
+    leftMeta.style.display = 'flex';
+    leftMeta.style.alignItems = 'center';
+    leftMeta.appendChild(avatar);
+    leftMeta.appendChild(userLink);
+
+    const rightMeta = document.createElement('div');
+    rightMeta.style.display = 'flex';
+    rightMeta.style.flexDirection = 'column';
+    rightMeta.style.alignItems = 'flex-end';
+    rightMeta.appendChild(time);
+
+    if (p.category) {
+      const catTag = document.createElement('button');
+      catTag.className = 'post-category-tag';
+      catTag.textContent = '#' + p.category;
+      catTag.onclick = () => {
+        state.currentCategoryFilter = p.category;
+        renderCategoryBar(allFeedPosts);
+        renderPostsInto(getFilteredFeedPosts(), 'posts');
+      };
+      rightMeta.appendChild(catTag);
+    }
+
+    meta.appendChild(leftMeta);
+    meta.appendChild(rightMeta);
 
     const content = document.createElement('div');
     content.className = 'content';
@@ -413,7 +445,48 @@ function renderPostsInto(posts, containerId) {
 async function loadPosts() {
   const headers = state.token ? { Authorization: 'Bearer ' + state.token } : {};
   const posts = await fetch('/api/posts', { headers }).then(r => r.json());
-  renderPostsInto(posts, 'posts');
+  allFeedPosts = Array.isArray(posts) ? posts : [];
+  renderCategoryBar(allFeedPosts);
+  renderPostsInto(getFilteredFeedPosts(), 'posts');
+}
+
+function getFilteredFeedPosts() {
+  if (!state.currentCategoryFilter) return allFeedPosts;
+  const target = state.currentCategoryFilter.toLowerCase();
+  return allFeedPosts.filter(p => (p.category || '').toLowerCase() === target);
+}
+
+function renderCategoryBar(posts) {
+  const bar = document.getElementById('category-bar');
+  if (!bar) return;
+  const categories = new Set();
+  posts.forEach(p => {
+    if (p.category) categories.add(p.category);
+  });
+  bar.innerHTML = '';
+  if (!categories.size) return;
+
+  const allBtn = document.createElement('button');
+  allBtn.className = 'category-chip' + (state.currentCategoryFilter ? '' : ' active');
+  allBtn.textContent = state.lang === 'ru' ? 'Все категории' : 'All';
+  allBtn.onclick = () => {
+    state.currentCategoryFilter = null;
+    renderCategoryBar(posts);
+    renderPostsInto(getFilteredFeedPosts(), 'posts');
+  };
+  bar.appendChild(allBtn);
+
+  categories.forEach(cat => {
+    const btn = document.createElement('button');
+    btn.className = 'category-chip' + (state.currentCategoryFilter === cat ? ' active' : '');
+    btn.textContent = '#' + cat;
+    btn.onclick = () => {
+      state.currentCategoryFilter = cat;
+      renderCategoryBar(posts);
+      renderPostsInto(getFilteredFeedPosts(), 'posts');
+    };
+    bar.appendChild(btn);
+  });
 }
 
 async function loadSubscriptionsPosts() {
@@ -600,6 +673,8 @@ document.getElementById('btn-voice-record').onclick = async () => {
 document.getElementById('btn-post').onclick = async () => {
   if (!state.token) return alert(t('loginToPost'));
   const content = document.getElementById('post-content').value;
+  const categoryInput = document.getElementById('post-category');
+  const category = categoryInput ? categoryInput.value.trim() : '';
   const imageInput = document.getElementById('post-image');
   const audioInput = document.getElementById('post-audio');
   const videoInput = document.getElementById('post-video');
@@ -613,6 +688,7 @@ document.getElementById('btn-post').onclick = async () => {
     if (hasImage || hasAudio || hasVideo) {
       const formData = new FormData();
       formData.append('content', content);
+      if (category) formData.append('category', category);
       if (hasImage) formData.append('image', imageInput.files[0]);
       if (recordedVoiceBlob) {
         const ext = (recordedVoiceBlob.type || '').includes('ogg') ? 'ogg' : 'webm';
@@ -621,11 +697,14 @@ document.getElementById('btn-post').onclick = async () => {
       if (hasVideo) formData.append('video', videoInput.files[0]);
       res = await api.postFormData('/posts/with-media', formData, state.token);
     } else {
-      res = await api.post('/posts', { content }, state.token);
+      const body = { content };
+      if (category) body.category = category;
+      res = await api.post('/posts', body, state.token);
     }
     
     if (res.id) {
       document.getElementById('post-content').value = '';
+      if (categoryInput) categoryInput.value = '';
       imageInput.value = '';
       audioInput.value = '';
       videoInput.value = '';
@@ -649,7 +728,7 @@ document.getElementById('btn-post').onclick = async () => {
 
 async function showProfile(userId) {
   const res = await api.get(`/users/${userId}`, state.token);
-  if (!res.id) return alert('User not found');
+  if (!res.id) return alert(t('userNotFound'));
   const modal = document.createElement('div'); modal.className='modal-root profile-fullpage';
   const card = document.createElement('div'); card.className='modal-card'; card.style.overflowY='auto';
   const close = document.createElement('button'); close.textContent = '✕'; close.style.position = 'absolute'; close.style.top='8px'; close.style.right='8px'; close.style.background='transparent'; close.style.border='none'; close.style.cursor='pointer'; close.style.fontSize='20px';
@@ -657,6 +736,7 @@ async function showProfile(userId) {
   const avatar = document.createElement('img'); avatar.src = res.avatar; avatar.className='avatar-large'; avatar.style.cursor = state.token && state.user.id === userId ? 'pointer' : 'default';
   if (state.token && state.user.id === userId) avatar.onclick = showAvatarUpload;
   const username = document.createElement('h2'); username.textContent = formatUsername(res.username);
+  const idLine = document.createElement('p'); idLine.className = 'profile-id-line'; idLine.textContent = `${t('profileId')}: ${res.id}`; idLine.style.color = 'var(--muted)'; idLine.style.fontSize = '13px'; idLine.style.marginTop = '2px';
   const bio = document.createElement('p'); bio.textContent = res.bio || '(no bio)'; bio.style.color = 'var(--muted)';
   
   // Add subscribers count
@@ -691,7 +771,7 @@ async function showProfile(userId) {
     postDiv.innerHTML = `<strong>${p.content}</strong><br><small>${new Date(p.created_at).toLocaleString()}</small>`;
     postsList.appendChild(postDiv);
   }
-  card.appendChild(close); card.appendChild(avatar); card.appendChild(username); card.appendChild(bio); card.appendChild(subscribersDiv);
+  card.appendChild(close); card.appendChild(avatar); card.appendChild(username); card.appendChild(idLine); card.appendChild(bio); card.appendChild(subscribersDiv);
   if (editBtn) card.appendChild(editBtn);
   card.appendChild(postsTitle); card.appendChild(postsList);
   modal.appendChild(card);
@@ -994,7 +1074,35 @@ async function refreshNotificationsIndicator() {
 const langSelect = document.getElementById('lang-select');
 if (langSelect) {
   langSelect.value = state.lang;
-  langSelect.onchange = () => { state.lang = langSelect.value; localStorage.setItem('lang', state.lang); renderAuth(); loadPosts(); };
+  langSelect.onchange = () => {
+    state.lang = langSelect.value;
+    localStorage.setItem('lang', state.lang);
+    renderAuth();
+    loadPosts();
+    const uidSearch = document.getElementById('user-id-search');
+    if (uidSearch) uidSearch.placeholder = t('userIdPlaceholder');
+    const btnSearch = document.getElementById('btn-search-user');
+    if (btnSearch) btnSearch.title = t('searchUserById');
+  };
+}
+
+const userIdSearch = document.getElementById('user-id-search');
+const btnSearchUser = document.getElementById('btn-search-user');
+if (userIdSearch) userIdSearch.placeholder = t('userIdPlaceholder');
+if (btnSearchUser) {
+  btnSearchUser.title = t('searchUserById');
+  btnSearchUser.onclick = () => {
+    const raw = userIdSearch.value.trim();
+    const id = parseInt(raw, 10);
+    if (!raw || !Number.isInteger(id) || id < 1) return alert(t('userNotFound'));
+    userIdSearch.value = '';
+    showProfile(id);
+  };
+}
+if (userIdSearch) {
+  userIdSearch.onkeydown = (e) => {
+    if (e.key === 'Enter') btnSearchUser.click();
+  };
 }
 
 const themeBtn = document.getElementById('theme-toggle');
@@ -1034,8 +1142,59 @@ if (voiceRecordBtn) {
   if (typeof MediaRecorder === 'undefined') voiceRecordBtn.style.display = 'none';
 }
 
+async function loadSiteLogo() {
+  try {
+    const r = await fetch('/api/settings/logo');
+    const data = await r.json();
+    const img = document.getElementById('site-logo');
+    const fallback = document.querySelector('.logo-fallback');
+    if (data.logoUrl && img && fallback) {
+      img.src = data.logoUrl;
+      img.classList.remove('hidden');
+      fallback.style.display = 'none';
+    } else if (img && fallback) {
+      img.classList.add('hidden');
+      img.src = '';
+      fallback.style.display = '';
+    }
+  } catch (e) {}
+}
+
+const logoFileInput = document.getElementById('logo-file');
+const btnAddLogo = document.getElementById('btn-add-logo');
+if (btnAddLogo) btnAddLogo.onclick = () => logoFileInput && logoFileInput.click();
+if (logoFileInput) {
+  logoFileInput.onchange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (!state.token) {
+      alert(state.lang === 'ru' ? 'Войдите, чтобы изменить логотип' : 'Log in to change the logo');
+      e.target.value = '';
+      return;
+    }
+    const fd = new FormData();
+    fd.append('logo', file);
+    try {
+      const res = await fetch('/api/settings/logo', { method: 'POST', headers: { Authorization: 'Bearer ' + state.token }, body: fd });
+      const data = await res.json();
+      if (data.logoUrl) {
+        const img = document.getElementById('site-logo');
+        const fallback = document.querySelector('.logo-fallback');
+        if (img) { img.src = data.logoUrl; img.classList.remove('hidden'); }
+        if (fallback) fallback.style.display = 'none';
+      } else {
+        alert(data.error || (state.lang === 'ru' ? 'Ошибка загрузки' : 'Upload failed'));
+      }
+    } catch (err) {
+      alert(err.message || 'Error');
+    }
+    e.target.value = '';
+  };
+}
+
 switchPage('feed');
 renderAuth();
 loadPosts();
+loadSiteLogo();
 startAutoRefresh();
 refreshNotificationsIndicator();
