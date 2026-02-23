@@ -58,9 +58,29 @@ const uploadPostMedia = multer({
   }
 }).fields([{ name: 'image', maxCount: 1 }, { name: 'audio', maxCount: 1 }]);
 
+const logoStorage = multer.diskStorage({
+  destination: async (req, file, cb) => {
+    await fs.mkdir(uploadDir, { recursive: true });
+    cb(null, uploadDir);
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname) || '.png';
+    cb(null, 'site-logo' + ext);
+  }
+});
+const uploadLogo = multer({
+  storage: logoStorage,
+  limits: { fileSize: 2 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    if (!file.mimetype.startsWith('image/')) return cb(new Error('Only images allowed'));
+    cb(null, true);
+  }
+}).single('logo');
+
 async function initDb() {
   const db = await open({ filename: path.join(__dirname, 'data.db'), driver: sqlite3.Database });
   await db.exec(`
+    CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT);
     CREATE TABLE IF NOT EXISTS users (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       username TEXT UNIQUE,
@@ -73,6 +93,8 @@ async function initDb() {
       user_id INTEGER,
       content TEXT,
       image TEXT DEFAULT NULL,
+      audio TEXT DEFAULT NULL,
+      category TEXT DEFAULT NULL,
       created_at INTEGER,
       FOREIGN KEY(user_id) REFERENCES users(id)
     );
@@ -128,6 +150,9 @@ async function initDb() {
   `);
   try {
     await db.run('ALTER TABLE posts ADD COLUMN audio TEXT DEFAULT NULL');
+  } catch (e) { /* column may already exist */ }
+  try {
+    await db.run('ALTER TABLE posts ADD COLUMN category TEXT DEFAULT NULL');
   } catch (e) { /* column may already exist */ }
   return db;
 }
@@ -207,7 +232,7 @@ function authMiddleware(req, res, next) {
       }
     }
     const posts = await db.all(`
-      SELECT p.id, p.content, p.image, p.audio, p.created_at, u.id as user_id, u.username, u.avatar
+      SELECT p.id, p.content, p.image, p.audio, p.category, p.created_at, u.id as user_id, u.username, u.avatar
       FROM posts p
       JOIN users u ON u.id = p.user_id
       ORDER BY p.created_at DESC
@@ -228,7 +253,7 @@ function authMiddleware(req, res, next) {
   app.get('/api/posts/subscriptions', authMiddleware, async (req, res) => {
     const userId = req.user.id;
     const posts = await db.all(`
-      SELECT p.id, p.content, p.image, p.audio, p.created_at, u.id as user_id, u.username, u.avatar
+      SELECT p.id, p.content, p.image, p.audio, p.category, p.created_at, u.id as user_id, u.username, u.avatar
       FROM posts p
       JOIN users u ON u.id = p.user_id
       WHERE p.user_id IN (SELECT subscribed_to_id FROM subscriptions WHERE subscriber_id = ?)
@@ -246,13 +271,13 @@ function authMiddleware(req, res, next) {
 
   app.post('/api/posts', authMiddleware, async (req, res) => {
     try {
-      const { content } = req.body;
+      const { content, category } = req.body;
       if (!content || content.trim() === '') {
         return res.status(400).json({ error: 'content required' });
       }
       const created_at = Date.now();
-      const result = await db.run('INSERT INTO posts (user_id, content, image, audio, created_at) VALUES (?, ?, ?, ?, ?)', req.user.id, content, null, null, created_at);
-      const post = await db.get('SELECT p.id, p.content, p.image, p.audio, p.created_at, u.id as user_id, u.username, u.avatar FROM posts p JOIN users u ON u.id = p.user_id WHERE p.id = ?', result.lastID);
+      const result = await db.run('INSERT INTO posts (user_id, content, image, audio, category, created_at) VALUES (?, ?, ?, ?, ?, ?)', req.user.id, content, null, null, category || null, created_at);
+      const post = await db.get('SELECT p.id, p.content, p.image, p.audio, p.category, p.created_at, u.id as user_id, u.username, u.avatar FROM posts p JOIN users u ON u.id = p.user_id WHERE p.id = ?', result.lastID);
       
       // Notify all subscribers
       const subscribers = await db.all('SELECT subscriber_id FROM subscriptions WHERE subscribed_to_id = ?', req.user.id);
@@ -269,14 +294,14 @@ function authMiddleware(req, res, next) {
 
   app.post('/api/posts/with-image', authMiddleware, uploadPostImage.single('image'), async (req, res) => {
     try {
-      const { content } = req.body;
+      const { content, category } = req.body;
       if (!content && !req.file) {
         return res.status(400).json({ error: 'content or image required' });
       }
       const created_at = Date.now();
       const imageUrl = req.file ? '/uploads/' + req.file.filename : null;
-      const result = await db.run('INSERT INTO posts (user_id, content, image, audio, created_at) VALUES (?, ?, ?, ?, ?)', req.user.id, content || '', imageUrl, null, created_at);
-      const post = await db.get('SELECT p.id, p.content, p.image, p.audio, p.created_at, u.id as user_id, u.username, u.avatar FROM posts p JOIN users u ON u.id = p.user_id WHERE p.id = ?', result.lastID);
+      const result = await db.run('INSERT INTO posts (user_id, content, image, audio, category, created_at) VALUES (?, ?, ?, ?, ?, ?)', req.user.id, content || '', imageUrl, null, category || null, created_at);
+      const post = await db.get('SELECT p.id, p.content, p.image, p.audio, p.category, p.created_at, u.id as user_id, u.username, u.avatar FROM posts p JOIN users u ON u.id = p.user_id WHERE p.id = ?', result.lastID);
       
       const subscribers = await db.all('SELECT subscriber_id FROM subscriptions WHERE subscribed_to_id = ?', req.user.id);
       for (const sub of subscribers) {
@@ -292,7 +317,7 @@ function authMiddleware(req, res, next) {
 
   app.post('/api/posts/with-media', authMiddleware, uploadPostMedia, async (req, res) => {
     try {
-      const { content } = req.body || {};
+      const { content, category } = req.body || {};
       const imageFile = req.files && req.files.image && req.files.image[0];
       const audioFile = req.files && req.files.audio && req.files.audio[0];
       if (!content && !imageFile && !audioFile) {
@@ -301,8 +326,8 @@ function authMiddleware(req, res, next) {
       const created_at = Date.now();
       const imageUrl = imageFile ? '/uploads/' + imageFile.filename : null;
       const audioUrl = audioFile ? '/uploads/' + audioFile.filename : null;
-      const result = await db.run('INSERT INTO posts (user_id, content, image, audio, created_at) VALUES (?, ?, ?, ?, ?)', req.user.id, content || '', imageUrl, audioUrl, created_at);
-      const post = await db.get('SELECT p.id, p.content, p.image, p.audio, p.created_at, u.id as user_id, u.username, u.avatar FROM posts p JOIN users u ON u.id = p.user_id WHERE p.id = ?', result.lastID);
+      const result = await db.run('INSERT INTO posts (user_id, content, image, audio, category, created_at) VALUES (?, ?, ?, ?, ?, ?)', req.user.id, content || '', imageUrl, audioUrl, category || null, created_at);
+      const post = await db.get('SELECT p.id, p.content, p.image, p.audio, p.category, p.created_at, u.id as user_id, u.username, u.avatar FROM posts p JOIN users u ON u.id = p.user_id WHERE p.id = ?', result.lastID);
       
       const subscribers = await db.all('SELECT subscriber_id FROM subscriptions WHERE subscribed_to_id = ?', req.user.id);
       for (const sub of subscribers) {
@@ -411,7 +436,7 @@ function authMiddleware(req, res, next) {
     }
     const user = await db.get('SELECT id, username, avatar, bio FROM users WHERE id = ?', userId);
     if (!user) return res.status(404).json({ error: 'user not found' });
-    const posts = await db.all('SELECT id, content, created_at FROM posts WHERE user_id = ? ORDER BY created_at DESC', userId);
+    const posts = await db.all('SELECT id, content, category, created_at FROM posts WHERE user_id = ? ORDER BY created_at DESC', userId);
     const subscribers = await db.get('SELECT COUNT(*) as count FROM subscriptions WHERE subscribed_to_id = ?', userId);
     let isSubscribed = false;
     if (currentUserId) {
@@ -547,6 +572,25 @@ function authMiddleware(req, res, next) {
     const fromUserId = parseInt(req.params.userId);
     await db.run('UPDATE messages SET is_read = 1 WHERE from_user_id = ? AND to_user_id = ?', fromUserId, req.user.id);
     res.json({ success: true });
+  });
+
+  app.get('/api/settings/logo', async (req, res) => {
+    try {
+      const row = await db.get("SELECT value FROM settings WHERE key = 'logo_url'");
+      res.json({ logoUrl: row ? row.value : null });
+    } catch (e) {
+      res.json({ logoUrl: null });
+    }
+  });
+
+  app.post('/api/settings/logo', authMiddleware, (req, res) => {
+    uploadLogo(req, res, async (err) => {
+      if (err) return res.status(400).json({ error: err.message });
+      if (!req.file) return res.status(400).json({ error: 'no file uploaded' });
+      const logoUrl = '/uploads/' + req.file.filename;
+      await db.run("INSERT OR REPLACE INTO settings (key, value) VALUES ('logo_url', ?)", logoUrl);
+      res.json({ logoUrl });
+    });
   });
 
   app.get('/api/health', (req, res) => {
