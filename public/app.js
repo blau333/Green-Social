@@ -9,7 +9,7 @@ const reactions = {
 
 const i18n = {
   en: {
-    login: 'Login', register: 'Register', logout: 'Logout', hi: 'Hi,', welcome: 'Welcome', postPlaceholder: "Bro, whats wrong or send meme :)", post: 'Опубликовать', comments: 'Comments', writeComment: 'Write a comment', send: 'Send', create: 'Create', cancel: 'Cancel', loginFailed: 'Login failed', regFailed: 'Registration failed', loginTitle: 'Sign in', registerTitle: 'Create account', reactLike: 'Like', reactLove: 'Love', reactFunny: 'Funny', loginToReact: 'Login to react', loginToComment: 'Login to comment', loginToPost: 'Login to post', subscribe: 'Subscribe', unsubscribe: 'Unsubscribe', subscribers: 'Subscribers', editProfile: 'Edit Profile', notifications: 'Notifications', noNotifications: 'No notifications', markAllAsRead: 'Mark all as read', subscribedYou: 'subscribed to you', postedNew: 'posted a new post', feed: 'Feed', subscriptions: 'Subscriptions', messages: 'Messages', noMessages: 'No messages', typeMessage: 'Type a message...', sendMessage: 'Send Message',
+    login: 'Login', register: 'Register', logout: 'Logout', hi: 'Yo,', welcome: 'Welcome', postPlaceholder: "Bro, whats wrong or send meme :)", post: 'Опубликовать', comments: 'Comments', writeComment: 'Write a comment', send: 'Send', create: 'Create', cancel: 'Cancel', loginFailed: 'Login failed', regFailed: 'Registration failed', loginTitle: 'Sign in', registerTitle: 'Create account', reactLike: 'Like', reactLove: 'Love', reactFunny: 'Funny', loginToReact: 'Login to react', loginToComment: 'Login to comment', loginToPost: 'Login to post', subscribe: 'Subscribe', unsubscribe: 'Unsubscribe', subscribers: 'Subscribers', editProfile: 'Edit Profile', notifications: 'Notifications', noNotifications: 'No notifications', markAllAsRead: 'Mark all as read', subscribedYou: 'subscribed to you', postedNew: 'posted a new post', feed: 'Feed', subscriptions: 'Subscriptions', messages: 'Messages', noMessages: 'No messages', typeMessage: 'Type a message...', sendMessage: 'Send Message',
     passwordRequirements: 'At least 8 characters, one uppercase, one lowercase, one digit, one special character',
     password_min_length: 'Password must be at least 8 characters',
     password_need_upper: 'Password must contain at least one uppercase letter',
@@ -24,7 +24,7 @@ const i18n = {
     voiceRecorded: 'Voice message recorded',
     recordVoiceTitle: 'Record voice message',
     noMic: 'Microphone access is required for recording',
-    noPostsSubscriptions: 'Subscribe to users to see their posts here',
+    noPostsSubscriptions: 'No subscriptions yet',
     viewInSubscriptions: 'View in Subscriptions',
     DeletePost: 'Delete Post',
     deleteConfirm: 'Delete this post?',
@@ -46,7 +46,7 @@ const i18n = {
     voiceRecorded: 'Голосовое сообщение записано',
     recordVoiceTitle: 'Записать голосовое сообщение',
     noMic: 'Для записи нужен доступ к микрофону',
-    noPostsSubscriptions: 'Подпишитесь на пользователей, чтобы видеть их посты здесь',
+    noPostsSubscriptions: 'Подписок нету',
     viewInSubscriptions: 'Открыть в подписках',
     DeletePost: 'Удалить публикацию',
     deleteConfirm: 'Удалить этот пост?',
@@ -61,6 +61,41 @@ function validatePassword(p) {
   if (!/[0-9]/.test(p)) return { ok: false, error: 'password_need_digit' };
   if (!/[^A-Za-z0-9]/.test(p)) return { ok: false, error: 'password_need_special' };
   return { ok: true };
+}
+
+function generateStrongPassword(length=13) {
+  const upper = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+  const lower = 'abcdefghijklmnopqrstuvwxyz'
+  const numbers = '0123456789'
+  const specials = '!@#$%^&*()_+[]{}<>?'
+  const allChars = upper + lower + numbers + specials;
+
+  if (length<4) length=4;
+
+  function getRandomInt(max) {
+    const randomBuffer = new Uint32Array(1);
+    crypto.getRandomValues(randomBuffer);
+    return Math.floor(randomBuffer[0] / (0xFFFFFFFF + 1) * max);
+  }
+  function shuffle(str) {
+    const arr = str.split('');
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = getRandomInt(i + 1);
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr.join('');
+  }
+  let password = '';
+  password += upper[getRandomInt(upper.length)];
+  password += lower[getRandomInt(lower.length)];
+  password += numbers[getRandomInt(numbers.length)];
+  password += specials[getRandomInt(specials.length)];
+  
+  for (let i = 4; i < length; i++) {
+    password += allChars[getRandomInt(allChars.length)];
+  }
+
+  return shuffle(password);
 }
 
 const state = {
@@ -81,6 +116,12 @@ const api = {
     const headers = { 'Content-Type': 'application/json' };
     if (token) headers.Authorization = 'Bearer ' + token;
     const r = await fetch('/api' + path, { method: 'POST', headers, body: JSON.stringify(body) });
+    return r.json();
+  },
+  async put(path, body, token) {
+    const headers = { 'Content-Type': 'application/json' };
+    if (token) headers.Authorization = 'Bearer ' + token;
+    const r = await fetch('/api' + path, { method: 'PUT', headers, body: JSON.stringify(body) });
     return r.json();
   },
   async postFormData(path, formData, token) {
@@ -141,6 +182,10 @@ function clearAuth(){ state.token = null; state.user = null; localStorage.remove
 
 function t(k){ return i18n[state.lang][k] || k }
 
+function formatUsername(name) {
+  return name === 'blau3' ? name + ' 🔧' : name;
+}
+
 function renderAuth(){
   const area = document.getElementById('auth-area');
   area.innerHTML = '';
@@ -153,7 +198,7 @@ function renderAuth(){
     const cp = document.getElementById('create-post'); if (cp) cp.classList.add('hidden');
     if (profileBtn) profileBtn.classList.add('hidden');
   } else {
-    const span = document.createElement('div'); span.textContent = `${t('hi')} ${state.user.username}`;
+    const span = document.createElement('div'); span.textContent = `${t('hi')} ${formatUsername(state.user.username)}`;
     const out = document.createElement('button'); out.textContent=t('logout'); out.onclick = () => clearAuth();
     area.appendChild(span); area.appendChild(out);
     const cp = document.getElementById('create-post'); if (cp) cp.classList.remove('hidden');
@@ -189,7 +234,31 @@ function showLogin(){
 }
 
 function showRegister(){
-  const { root } = makeModal(`<h2>${t('registerTitle')}</h2><input id="rg-user" placeholder="username"><input id="rg-pass" type="password" placeholder="password"><div class="password-hint">${t('passwordRequirements')}</div><div class="actions"><button id="rg-cancel">${t('cancel')}</button><button id="rg-submit">${t('create')}</button></div>`);
+  const { root } = makeModal(`
+    <h2>${t('registerTitle')}</h2>
+    <input id="rg-user" placeholder="username">
+    <div style="display: flex; gap: 5px; margin-bottom: 8px;">
+      <input id="rg-pass" type="password" placeholder="password" style="flex: 1;">
+      <button
+        id="rg-generate"
+        type="button"
+        style="font-size: 11px; padding: 4px 8px; white-space: nowrap;"
+      >
+        Сгенерировать пароль
+      </button>
+    </div>
+    <div class="password-hint">${t('passwordRequirements')}</div>
+    <div class="actions">
+      <button id="rg-cancel">${t('cancel')}</button>
+      <button id="rg-submit">${t('create')}</button>
+    </div>
+  `);
+
+  document.getElementById('rg-generate').onclick = () => {
+    const newPassword = generateStrongPassword(12);
+    document.getElementById('rg-pass').value = newPassword;
+  };
+
   document.getElementById('rg-cancel').onclick = () => root.remove();
   document.getElementById('rg-submit').onclick = async () => {
     const username = document.getElementById('rg-user').value.trim();
@@ -217,6 +286,9 @@ function autoRefreshCurrentPage() {
   if (state.currentPage === 'feed') loadPosts();
   else if (state.currentPage === 'subscriptions') loadSubscriptionsPosts();
   else if (state.currentPage === 'notifications') loadNotificationsPage();
+
+  // Периодически обновляем индикатор количества уведомлений
+  refreshNotificationsIndicator();
 }
 
 function startAutoRefresh() {
@@ -249,7 +321,7 @@ function renderPostsInto(posts, containerId) {
     avatar.onclick = () => showProfile(p.user_id);
 
     const userLink = document.createElement('strong');
-    userLink.textContent = p.username;
+    userLink.textContent = formatUsername(p.username);
     userLink.style.cursor = 'pointer';
     userLink.onclick = () => showProfile(p.user_id);
 
@@ -302,6 +374,15 @@ function renderPostsInto(posts, containerId) {
       audio.style.width = '100%';
       audio.style.marginTop = '8px';
       imageDiv.appendChild(audio);
+    }
+    if (p.video) {
+      const video = document.createElement('video');
+      video.controls = true;
+      video.src = p.video;
+      video.style.width = '100%';
+      video.style.marginTop = '8px';
+      video.style.borderRadius = '12px';
+      imageDiv.appendChild(video);
     }
     const reactionsDiv = document.createElement('div'); reactionsDiv.className = 'reactions';
     const types = ['like', 'love', 'funny', 'poop', 'clown'];
@@ -367,7 +448,7 @@ async function toggleComments(card, postId){
       const div = document.createElement('div'); div.className='comment'; 
       const avatar = document.createElement('img'); avatar.src = c.avatar; avatar.className='avatar-tiny'; avatar.style.cursor='pointer';
       avatar.onclick = () => showProfile(c.user_id);
-      const nameLink = document.createElement('strong'); nameLink.textContent = c.username; nameLink.style.cursor='pointer';
+      const nameLink = document.createElement('strong'); nameLink.textContent = formatUsername(c.username); nameLink.style.cursor='pointer';
       nameLink.onclick = () => showProfile(c.user_id);
       const time = document.createElement('small'); time.textContent = new Date(c.created_at).toLocaleString();
       div.appendChild(avatar); div.appendChild(nameLink); div.appendChild(time); div.appendChild(document.createElement('div')).textContent = c.content;
@@ -450,6 +531,22 @@ document.getElementById('post-audio').onchange = (e) => {
   updateVoiceHint();
 };
 
+document.getElementById('btn-video').onclick = () => document.getElementById('post-video').click();
+document.getElementById('post-video').onchange = (e) => {
+  const file = e.target.files[0];
+  let hint = document.getElementById('video-file-hint');
+  if (hint) hint.remove();
+  if (file) {
+    hint = document.createElement('div');
+    hint.id = 'video-file-hint';
+    hint.style.fontSize = '12px';
+    hint.style.color = 'var(--muted)';
+    hint.style.marginTop = '4px';
+    hint.textContent = '🎬 ' + file.name;
+    document.getElementById('post-content').parentElement.insertBefore(hint, document.getElementById('post-content').nextElementSibling);
+  }
+};
+
 document.getElementById('btn-voice-record').onclick = async () => {
   const btn = document.getElementById('btn-voice-record');
   const statusEl = document.getElementById('voice-record-status');
@@ -505,13 +602,15 @@ document.getElementById('btn-post').onclick = async () => {
   const content = document.getElementById('post-content').value;
   const imageInput = document.getElementById('post-image');
   const audioInput = document.getElementById('post-audio');
+  const videoInput = document.getElementById('post-video');
   const hasImage = imageInput.files.length > 0;
   const hasAudio = !!recordedVoiceBlob || audioInput.files.length > 0;
-  if (!content && !hasImage && !hasAudio) return alert('Please write something or add an image or audio');
+  const hasVideo = videoInput.files.length > 0;
+  if (!content && !hasImage && !hasAudio && !hasVideo) return alert('Please write something or add media');
   
   try {
     let res;
-    if (hasImage || hasAudio) {
+    if (hasImage || hasAudio || hasVideo) {
       const formData = new FormData();
       formData.append('content', content);
       if (hasImage) formData.append('image', imageInput.files[0]);
@@ -519,6 +618,7 @@ document.getElementById('btn-post').onclick = async () => {
         const ext = (recordedVoiceBlob.type || '').includes('ogg') ? 'ogg' : 'webm';
         formData.append('audio', recordedVoiceBlob, 'voice.' + ext);
       } else if (audioInput.files.length) formData.append('audio', audioInput.files[0]);
+      if (hasVideo) formData.append('video', videoInput.files[0]);
       res = await api.postFormData('/posts/with-media', formData, state.token);
     } else {
       res = await api.post('/posts', { content }, state.token);
@@ -528,11 +628,14 @@ document.getElementById('btn-post').onclick = async () => {
       document.getElementById('post-content').value = '';
       imageInput.value = '';
       audioInput.value = '';
+      videoInput.value = '';
       recordedVoiceBlob = null;
       const preview = document.getElementById('image-preview');
       if (preview) preview.remove();
       const audioHint = document.getElementById('audio-file-hint');
       if (audioHint) audioHint.remove();
+      const videoHint = document.getElementById('video-file-hint');
+      if (videoHint) videoHint.remove();
       updateVoiceHint();
       loadPosts();
     } else {
@@ -553,7 +656,7 @@ async function showProfile(userId) {
   close.onclick = () => modal.remove();
   const avatar = document.createElement('img'); avatar.src = res.avatar; avatar.className='avatar-large'; avatar.style.cursor = state.token && state.user.id === userId ? 'pointer' : 'default';
   if (state.token && state.user.id === userId) avatar.onclick = showAvatarUpload;
-  const username = document.createElement('h2'); username.textContent = res.username;
+  const username = document.createElement('h2'); username.textContent = formatUsername(res.username);
   const bio = document.createElement('p'); bio.textContent = res.bio || '(no bio)'; bio.style.color = 'var(--muted)';
   
   // Add subscribers count
@@ -619,11 +722,15 @@ function showAvatarUpload() {
 
 function showEditProfile() {
   const { root } = makeModal(`<h2>Edit Profile</h2><textarea id="bio-text" placeholder="Bio" style="width:100%;height:80px">${state.user.bio || ''}</textarea><button id="bio-submit">Save</button><button id="bio-cancel">Cancel</button>`);
+  // Делает модалку редактирования поверх модалки профиля
+  root.style.zIndex = '10000';
+
   document.getElementById('bio-cancel').onclick = () => root.remove();
   document.getElementById('bio-submit').onclick = async () => {
     const bio = document.getElementById('bio-text').value;
-    if (!bio) return alert('Bio required');
-    const res = await api.post('/users/profile', { bio }, state.token);
+    const trimmed = bio.trim();
+    if (!trimmed) return alert('Bio required');
+    const res = await api.put('/users/profile', { bio: trimmed }, state.token);
     if (res.id) {
       state.user.bio = res.bio;
       localStorage.setItem('user', JSON.stringify(state.user));
@@ -678,7 +785,7 @@ async function showNotifications() {
       content.style.flex = '1';
       
       const userName = document.createElement('strong');
-      userName.textContent = n.username;
+      userName.textContent = formatUsername(n.username);
       userName.style.cursor = 'pointer';
       userName.onclick = () => { modal.remove(); showProfile(n.from_user_id); };
       
@@ -737,6 +844,10 @@ async function showNotifications() {
   modal.appendChild(card);
   modal.addEventListener('click', (e)=>{ if (e.target === modal) modal.remove(); });
   document.body.prepend(modal);
+
+  // Обновляем индикатор на вкладке уведомлений
+  const unreadCount = notifications.filter(n => !n.is_read).length;
+  updateNotificationsTab(unreadCount);
 }
 
 async function loadNotificationsPage() {
@@ -760,6 +871,10 @@ async function loadNotificationsPage() {
     container.appendChild(emptyMsg);
     return;
   }
+
+  // Обновляем индикатор на вкладке уведомлений
+  const unreadCount = notifications.some ? notifications.filter(n => !n.is_read).length : 0;
+  updateNotificationsTab(unreadCount);
   
   if (notifications.some(n => !n.is_read)) {
     const markAllBtn = document.createElement('button');
@@ -792,7 +907,7 @@ async function loadNotificationsPage() {
     textDiv.style.flex = '1';
     
     const userName = document.createElement('strong');
-    userName.textContent = n.username;
+    userName.textContent = formatUsername(n.username);
     userName.style.cursor = 'pointer';
     userName.onclick = (e) => { e.stopPropagation(); showProfile(n.from_user_id); };
     
@@ -847,6 +962,34 @@ async function loadNotificationsPage() {
   }
 }
 
+function updateNotificationsTab(count) {
+  const notificationsTab = document.getElementById('tab-notifications');
+  if (!notificationsTab) return;
+  const label = t('notifications');
+  if (count && count > 0) {
+    notificationsTab.textContent = `🔔 ${label} (${count})`;
+    notificationsTab.classList.add('has-unread');
+  } else {
+    notificationsTab.textContent = `🪧 ${label}`;
+    notificationsTab.classList.remove('has-unread');
+  }
+}
+
+async function refreshNotificationsIndicator() {
+  if (!state.token) {
+    updateNotificationsTab(0);
+    return;
+  }
+  try {
+    const response = await api.get('/notifications', state.token);
+    const notifications = Array.isArray(response) ? response : [];
+    const unreadCount = notifications.filter(n => !n.is_read).length;
+    updateNotificationsTab(unreadCount);
+  } catch (err) {
+    console.error('Failed to refresh notifications indicator', err);
+  }
+}
+
 // language and theme wiring
 const langSelect = document.getElementById('lang-select');
 if (langSelect) {
@@ -895,3 +1038,4 @@ switchPage('feed');
 renderAuth();
 loadPosts();
 startAutoRefresh();
+refreshNotificationsIndicator();
