@@ -15,6 +15,7 @@ const i18n = {
     password_need_upper: 'Password must contain at least one uppercase letter',
     password_need_lower: 'Password must contain at least one lowercase letter',
     password_need_digit: 'Password must contain at least one digit',
+    password_confirm_mismatch: 'Passwords do not match',
     password_need_special: 'Password must contain at least one special character (!@#$%^&* etc.)',
     usernameRequired: 'Please enter a username',
     username_taken: 'This username is already taken (or too similar to an existing one)',
@@ -26,7 +27,7 @@ const i18n = {
     noMic: 'Microphone access is required for recording',
     noPostsSubscriptions: 'No subscriptions yet',
     viewInSubscriptions: 'View in Subscriptions',
-    DeletePost: 'Delete Post',
+    DeletePost: 'Delete post',
     deleteConfirm: 'Delete this post?',
     deleteError: 'Failed to delete post',
     searchUserById: 'Search user',
@@ -41,6 +42,7 @@ const i18n = {
     password_need_upper: 'В пароле должна быть хотя бы одна заглавная буква',
     password_need_lower: 'В пароле должна быть хотя бы одна строчная буква',
     password_need_digit: 'В пароле должна быть хотя бы одна цифра',
+    password_confirm_mismatch: 'Пароли не совпадают',
     password_need_special: 'В пароле должен быть хотя бы один спецсимвол (!@#$%^&* и т.д.)',
     usernameRequired: 'Введите имя пользователя',
     username_taken: 'Этот никнейм уже занят или слишком похож на существующий',
@@ -52,7 +54,7 @@ const i18n = {
     noMic: 'Для записи нужен доступ к микрофону',
     noPostsSubscriptions: 'Подписок нету',
     viewInSubscriptions: 'Открыть в подписках',
-    DeletePost: 'Удалить публикацию',
+    DeletePost: 'Удалить пост',
     deleteConfirm: 'Удалить этот пост?',
     deleteError: 'Не удалось удалить пост',
     searchUserById: 'Найти пользователя',
@@ -71,10 +73,11 @@ function validatePassword(p) {
 }
 
 function generateStrongPassword(length=8) {
-  const upper = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-  const lower = 'abcdefghijklmnopqrstuvwxyz'
-  const numbers = '0123456789'
-  const allChars = upper + lower + numbers;
+  const upper = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  const lower = 'abcdefghijklmnopqrstuvwxyz';
+  const numbers = '0123456789';
+  const specials = '!@#$%^&*_-+=';
+  const allChars = upper + lower + numbers + specials;
 
   if (length<4) length=4;
 
@@ -113,6 +116,48 @@ const state = {
 };
 
 let allFeedPosts = [];
+
+function renderHeaderUserAvatar() {
+  const avatarEl = document.getElementById('user-avatar');
+  if (!avatarEl) return;
+
+  if (!state.user) {
+    avatarEl.classList.add('hidden');
+    avatarEl.src = '';
+    avatarEl.onclick = null;
+    return;
+  }
+
+  avatarEl.classList.remove('hidden');
+  avatarEl.onclick = () => showProfile(state.user.id);
+
+  if (state.user.avatar) {
+    avatarEl.src = state.user.avatar;
+  } else {
+    // Fallback until we fetch the real avatar
+    avatarEl.src = 'data:image/svg+xml;utf8,' + encodeURIComponent(
+      `<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64"><rect width="100%" height="100%" rx="32" ry="32" fill="#d1fae5"/><text x="50%" y="54%" text-anchor="middle" font-size="28">👤</text></svg>`
+    );
+  }
+}
+
+async function ensureCurrentUserAvatar() {
+  if (!state.user || !state.user.id) return;
+  if (state.user.avatar) {
+    renderHeaderUserAvatar();
+    return;
+  }
+  try {
+    const res = await api.get(`/users/${state.user.id}`, state.token);
+    if (res && res.avatar) {
+      state.user.avatar = res.avatar;
+      localStorage.setItem('user', JSON.stringify(state.user));
+      renderHeaderUserAvatar();
+    }
+  } catch (e) {
+    // ignore
+  }
+}
 
 const api = {
   async get(path, token) {
@@ -198,25 +243,18 @@ function formatUsername(name) {
 function renderAuth(){
   const area = document.getElementById('auth-area');
   area.innerHTML = '';
-  const profileBtn = document.getElementById('profile-btn');
   if (!state.user) {
     const loginBtn = document.createElement('button'); loginBtn.textContent = t('login'); loginBtn.className='link';
     loginBtn.onclick = showLogin;
     const regBtn = document.createElement('button'); regBtn.textContent=t('register'); regBtn.onclick = showRegister; regBtn.style.marginLeft='8px';
     area.appendChild(loginBtn); area.appendChild(regBtn);
     const cp = document.getElementById('create-post'); if (cp) cp.classList.add('hidden');
-    if (profileBtn) profileBtn.classList.add('hidden');
   } else {
-    const span = document.createElement('div'); span.textContent = `${t('hi')} ${formatUsername(state.user.username)}`;
-    const out = document.createElement('button'); out.textContent=t('logout'); out.onclick = () => clearAuth();
-    area.appendChild(span); area.appendChild(out);
     const cp = document.getElementById('create-post'); if (cp) cp.classList.remove('hidden');
-    if (profileBtn) {
-      profileBtn.classList.remove('hidden');
-      profileBtn.onclick = () => showProfile(state.user.id);
-    }
+    ensureCurrentUserAvatar();
   }
   const welcomeEl = document.getElementById('welcome'); if (welcomeEl) welcomeEl.textContent = t('welcome');
+  renderHeaderUserAvatar();
 }
 
 function makeModal(innerHtml){
@@ -224,7 +262,7 @@ function makeModal(innerHtml){
   const card = document.createElement('div'); card.className='modal-card';
   card.innerHTML = innerHtml;
   root.appendChild(card);
-  document.body.prepend(root);
+  document.body.appendChild(root);
   // allow closing when clicking outside
   root.addEventListener('click', (e)=>{ if (e.target === root) root.remove(); });
   return { root, card };
@@ -246,8 +284,16 @@ function showRegister(){
   const { root } = makeModal(`
     <h2>${t('registerTitle')}</h2>
     <input id="rg-user" placeholder="username">
-    <div style="display: flex; gap: 5px; margin-bottom: 8px;">
+    <div style="display: flex; gap: 5px; margin-bottom: 8px; align-items: center;">
       <input id="rg-pass" type="password" placeholder="password" style="flex: 1;">
+      <button
+        id="rg-toggle"
+        type="button"
+        style="font-size: 14px; padding: 4px 8px;"
+        title="Show password"
+      >
+        👁
+      </button>
       <button
         id="rg-generate"
         type="button"
@@ -256,6 +302,7 @@ function showRegister(){
         Сгенерировать пароль
       </button>
     </div>
+    <input id="rg-pass2" type="password" placeholder="repeat password" style="margin-bottom: 4px;">
     <div class="password-hint">${t('passwordRequirements')}</div>
     <div class="actions">
       <button id="rg-cancel">${t('cancel')}</button>
@@ -263,16 +310,39 @@ function showRegister(){
     </div>
   `);
 
-  document.getElementById('rg-generate').onclick = () => {
-    const newPassword = generateStrongPassword(12);
-    document.getElementById('rg-pass').value = newPassword;
-  };
+  const passInput = document.getElementById('rg-pass');
+  const passRepeatInput = document.getElementById('rg-pass2');
+  const toggleBtn = document.getElementById('rg-toggle');
+  const generateBtn = document.getElementById('rg-generate');
+
+  if (generateBtn) {
+    generateBtn.onclick = () => {
+      const newPassword = generateStrongPassword(12);
+      if (passInput) passInput.value = newPassword;
+      if (passRepeatInput) passRepeatInput.value = newPassword;
+    };
+  }
+
+  if (toggleBtn && passInput && passRepeatInput) {
+    toggleBtn.onclick = () => {
+      const isHidden = passInput.type === 'password';
+      passInput.type = isHidden ? 'text' : 'password';
+      passRepeatInput.type = isHidden ? 'text' : 'password';
+      toggleBtn.textContent = isHidden ? '🙈' : '👁';
+      toggleBtn.title = isHidden ? 'Hide password' : 'Show password';
+    };
+  }
 
   document.getElementById('rg-cancel').onclick = () => root.remove();
   document.getElementById('rg-submit').onclick = async () => {
     const username = document.getElementById('rg-user').value.trim();
     const password = document.getElementById('rg-pass').value;
+    const password2 = document.getElementById('rg-pass2').value;
     if (!username) return alert(t('usernameRequired'));
+    if (!password || !password2 || password !== password2) {
+      alert(t('password_confirm_mismatch'));
+      return;
+    }
     const pwCheck = validatePassword(password);
     if (!pwCheck.ok) {
       alert(t(pwCheck.error));
@@ -370,7 +440,7 @@ function renderPostsInto(posts, containerId) {
 
     if (state.user && state.user.id === p.user_id) {
       const deleteBtn = document.createElement('button');
-      deleteBtn.textContent = '🚮';
+      deleteBtn.textContent = t('DeletePost');
       deleteBtn.className = 'delete-btn';
       deleteBtn.title = t('DeletePost');
       deleteBtn.onclick = async () => {
@@ -487,6 +557,40 @@ function renderCategoryBar(posts) {
     };
     bar.appendChild(btn);
   });
+}
+
+function showCategoryEmojiPicker() {
+  const emojiBtn = document.getElementById('post-category-emoji');
+  const textInput = document.getElementById('post-category-text');
+  if (!emojiBtn) return;
+  const emojis = [
+    '😀','😁','😂','🤣','😊','😍','😘','😎',
+    '🤔','😴','😡','🥶','🥵','🤯','🤡','👻',
+    '👍','👎','🙏','👏','💪','🔥','✨','❤️',
+    '💚','💙','💜','🖤','🤍','💯','⚡','⭐',
+    '🌈','☀️','🌧','❄️','🌊','🌍','🌿','🌸',
+    '🍔','🍕','🍣','🍿','🍺','☕','🍎','🍩',
+    '⚽','🏀','🎮','🎧','🎬','📚','💻','📱'
+  ];
+  const { root, card } = makeModal(`
+    <h2 style="margin-bottom:4px">${state.lang === 'ru' ? 'Выбери эмодзи категории' : 'Choose category emoji'}</h2>
+    <div class="emoji-grid">
+      ${emojis.map(e => `<button class="emoji-choice" data-emoji="${e}">${e}</button>`).join('')}
+    </div>
+    <div class="actions">
+      <button id="emoji-cancel">${t('cancel')}</button>
+    </div>
+  `);
+  card.querySelectorAll('.emoji-choice').forEach(btn => {
+    btn.onclick = () => {
+      const value = btn.getAttribute('data-emoji');
+      if (value) { emojiBtn.dataset.emoji = value; emojiBtn.textContent = value; }
+      root.remove();
+      if (textInput) textInput.focus();
+    };
+  });
+  const cancelBtn = document.getElementById('emoji-cancel');
+  if (cancelBtn) cancelBtn.onclick = () => root.remove();
 }
 
 async function loadSubscriptionsPosts() {
@@ -673,8 +777,11 @@ document.getElementById('btn-voice-record').onclick = async () => {
 document.getElementById('btn-post').onclick = async () => {
   if (!state.token) return alert(t('loginToPost'));
   const content = document.getElementById('post-content').value;
-  const categoryInput = document.getElementById('post-category');
-  const category = categoryInput ? categoryInput.value.trim() : '';
+  const categoryTextInput = document.getElementById('post-category-text');
+  const emojiBtn = document.getElementById('post-category-emoji');
+  const categoryEmoji = (emojiBtn && emojiBtn.dataset && emojiBtn.dataset.emoji) ? emojiBtn.dataset.emoji.trim() : '';
+  const categoryText = categoryTextInput ? categoryTextInput.value.trim() : '';
+  const category = [categoryEmoji, categoryText].filter(Boolean).join(' ').trim();
   const imageInput = document.getElementById('post-image');
   const audioInput = document.getElementById('post-audio');
   const videoInput = document.getElementById('post-video');
@@ -704,7 +811,8 @@ document.getElementById('btn-post').onclick = async () => {
     
     if (res.id) {
       document.getElementById('post-content').value = '';
-      if (categoryInput) categoryInput.value = '';
+      if (categoryTextInput) categoryTextInput.value = '';
+      if (emojiBtn) { delete emojiBtn.dataset.emoji; emojiBtn.textContent = '😊'; }
       imageInput.value = '';
       audioInput.value = '';
       videoInput.value = '';
@@ -764,6 +872,17 @@ async function showProfile(userId) {
   
   const editBtn = state.token && state.user.id === userId ? document.createElement('button') : null;
   if (editBtn) { editBtn.textContent = t('editProfile'); editBtn.onclick = showEditProfile; }
+
+  let logoutBtn = null;
+  if (state.token && state.user.id === userId) {
+    logoutBtn = document.createElement('button');
+    logoutBtn.textContent = t('logout');
+    logoutBtn.style.marginTop = '12px';
+    logoutBtn.onclick = () => {
+      modal.remove();
+      clearAuth();
+    };
+  }
   const postsTitle = document.createElement('h3'); postsTitle.textContent = `${t('post')}s (${res.posts.length})`;
   const postsList = document.createElement('div');
   for (const p of res.posts) {
@@ -774,9 +893,10 @@ async function showProfile(userId) {
   card.appendChild(close); card.appendChild(avatar); card.appendChild(username); card.appendChild(idLine); card.appendChild(bio); card.appendChild(subscribersDiv);
   if (editBtn) card.appendChild(editBtn);
   card.appendChild(postsTitle); card.appendChild(postsList);
+  if (logoutBtn) card.appendChild(logoutBtn);
   modal.appendChild(card);
   modal.addEventListener('click', (e)=>{ if (e.target === modal) modal.remove(); });
-  document.body.prepend(modal);
+  document.body.appendChild(modal);
 }
 
 function showAvatarUpload() {
@@ -791,6 +911,7 @@ function showAvatarUpload() {
     if (res.id) {
       state.user.avatar = res.avatar;
       localStorage.setItem('user', JSON.stringify(state.user));
+      renderHeaderUserAvatar();
       root.remove();
       loadPosts();
       alert('Avatar updated');
@@ -923,7 +1044,7 @@ async function showNotifications() {
   
   modal.appendChild(card);
   modal.addEventListener('click', (e)=>{ if (e.target === modal) modal.remove(); });
-  document.body.prepend(modal);
+  document.body.appendChild(modal);
 
   // Обновляем индикатор на вкладке уведомлений
   const unreadCount = notifications.filter(n => !n.is_read).length;
@@ -1117,6 +1238,41 @@ if (themeBtn) {
   };
 }
 
+// Settings pop-up menu (gear)
+const settingsBtn = document.getElementById('settings-btn');
+const settingsMenu = document.getElementById('settings-menu');
+const settingsWrapper = settingsBtn ? settingsBtn.closest('.settings-wrapper') : null;
+
+function closeSettingsMenu() {
+  if (!settingsBtn || !settingsMenu) return;
+  settingsMenu.classList.add('hidden');
+  settingsBtn.setAttribute('aria-expanded', 'false');
+}
+
+function toggleSettingsMenu() {
+  if (!settingsBtn || !settingsMenu) return;
+  const isOpen = !settingsMenu.classList.contains('hidden');
+  if (isOpen) closeSettingsMenu();
+  else {
+    settingsMenu.classList.remove('hidden');
+    settingsBtn.setAttribute('aria-expanded', 'true');
+  }
+}
+
+if (settingsBtn && settingsMenu) {
+  settingsBtn.onclick = (e) => {
+    e.stopPropagation();
+    toggleSettingsMenu();
+  };
+  document.addEventListener('click', (e) => {
+    if (!settingsWrapper) return closeSettingsMenu();
+    if (!settingsWrapper.contains(e.target)) closeSettingsMenu();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeSettingsMenu();
+  });
+}
+
 // Set up tab switching
 const feedTab = document.getElementById('tab-feed');
 if (feedTab) {
@@ -1142,59 +1298,24 @@ if (voiceRecordBtn) {
   if (typeof MediaRecorder === 'undefined') voiceRecordBtn.style.display = 'none';
 }
 
-async function loadSiteLogo() {
-  try {
-    const r = await fetch('/api/settings/logo');
-    const data = await r.json();
-    const img = document.getElementById('site-logo');
-    const fallback = document.querySelector('.logo-fallback');
-    if (data.logoUrl && img && fallback) {
-      img.src = data.logoUrl;
-      img.classList.remove('hidden');
-      fallback.style.display = 'none';
-    } else if (img && fallback) {
-      img.classList.add('hidden');
-      img.src = '';
-      fallback.style.display = '';
-    }
-  } catch (e) {}
+const categoryEmojiBtn = document.getElementById('post-category-emoji');
+if (categoryEmojiBtn) {
+  categoryEmojiBtn.textContent = categoryEmojiBtn.dataset.emoji ? categoryEmojiBtn.dataset.emoji : '😊';
+  categoryEmojiBtn.onclick = () => showCategoryEmojiPicker();
 }
 
-const logoFileInput = document.getElementById('logo-file');
-const btnAddLogo = document.getElementById('btn-add-logo');
-if (btnAddLogo) btnAddLogo.onclick = () => logoFileInput && logoFileInput.click();
-if (logoFileInput) {
-  logoFileInput.onchange = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    if (!state.token) {
-      alert(state.lang === 'ru' ? 'Войдите, чтобы изменить логотип' : 'Log in to change the logo');
-      e.target.value = '';
-      return;
-    }
-    const fd = new FormData();
-    fd.append('logo', file);
-    try {
-      const res = await fetch('/api/settings/logo', { method: 'POST', headers: { Authorization: 'Bearer ' + state.token }, body: fd });
-      const data = await res.json();
-      if (data.logoUrl) {
-        const img = document.getElementById('site-logo');
-        const fallback = document.querySelector('.logo-fallback');
-        if (img) { img.src = data.logoUrl; img.classList.remove('hidden'); }
-        if (fallback) fallback.style.display = 'none';
-      } else {
-        alert(data.error || (state.lang === 'ru' ? 'Ошибка загрузки' : 'Upload failed'));
-      }
-    } catch (err) {
-      alert(err.message || 'Error');
-    }
-    e.target.value = '';
+// Click on header title scrolls to top
+const headerTitleRow = document.querySelector('.header-title-row');
+if (headerTitleRow) {
+  headerTitleRow.style.cursor = 'pointer';
+  headerTitleRow.onclick = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 }
 
 switchPage('feed');
 renderAuth();
+renderHeaderUserAvatar();
 loadPosts();
-loadSiteLogo();
 startAutoRefresh();
 refreshNotificationsIndicator();

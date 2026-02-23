@@ -13,11 +13,8 @@
     <header>
       <div class="header-left">
         <div class="header-title-row">
-          <img id="site-logo" class="site-logo hidden" src="" alt="">
-          <span class="logo-fallback">🌿</span>
+          <img src="/gs-logo.png" alt="Green-Social logo" class="site-logo">
           <h1>Green-Social</h1>
-          <input id="logo-file" type="file" accept="image/*" style="display:none">
-          <button id="btn-add-logo" type="button" class="btn-add-logo" title="Добавить логотип">📷</button>
         </div>
         <div id="welcome" class="welcome-text"></div>
         <div id="category-bar" class="category-bar"></div>
@@ -28,12 +25,23 @@
           <button id="btn-search-user" type="button" class="btn-search-user" title="Search user">🔍</button>
         </div>
         <div class="controls">
-          <select id="lang-select" aria-label="language-select">
-            <option value="ru">Рус</option>
-            <option value="en">Eng</option>
-          </select>
-          <button id="theme-toggle" title="Toggle theme">Dark</button>
-          <button id="profile-btn" class="hidden" title="View Profile">Profile</button>
+          <img id="user-avatar" class="header-avatar hidden" src="" alt="Profile">
+          <div class="settings-wrapper">
+            <button id="settings-btn" type="button" class="icon-btn" aria-label="Settings" aria-haspopup="menu" aria-expanded="false" title="Settings">⚙️</button>
+            <div id="settings-menu" class="settings-menu hidden" role="menu" aria-label="Settings menu">
+              <div class="settings-row">
+                <span class="settings-label">Language</span>
+                <select id="lang-select" aria-label="language-select">
+                  <option value="ru">Рус</option>
+                  <option value="en">Eng</option>
+                </select>
+              </div>
+              <div class="settings-row">
+                <span class="settings-label">Theme</span>
+                <button id="theme-toggle" type="button" title="Toggle theme">Dark</button>
+              </div>
+            </div>
+          </div>
         </div>
         <div id="auth-area"></div>
       </div>
@@ -43,7 +51,10 @@
       <section id="feed-page" class="page">
         <section id="create-post" class="card hidden">
           <textarea id="post-content" placeholder="Hows it going?"></textarea>
-          <input id="post-category" class="post-category-input" placeholder="Category (optional)">
+          <div class="post-category-row">
+            <button id="post-category-emoji" type="button" class="emoji-picker-btn" title="Выбрать эмодзи категории">😊</button>
+            <input id="post-category-text" class="post-category-input" placeholder="Category text (optional)">
+          </div>
           <div style="margin-bottom:8px">
             <input id="post-image" type="file" accept="image/*" style="display:none">
             <input id="post-audio" type="file" accept="audio/*" style="display:none">
