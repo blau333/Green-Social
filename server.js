@@ -7,6 +7,7 @@ const { open } = require('sqlite');
 const path = require('path');
 const multer = require('multer');
 const fs = require('fs').promises;
+const crypto = require('crypto');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-me';
 const PORT = process.env.PORT || 3000;
@@ -85,7 +86,8 @@ async function initDb() {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       username TEXT UNIQUE,
       password_hash TEXT,
-      avatar TEXT DEFAULT 'https://ui-avatars.com/api/?name=USER&background=10b981&color=fff',
+      recovery_token TEXT,
+      avatar TEXT DEFAULT '/default-avatar.png',
       bio TEXT DEFAULT ''
     );
     CREATE TABLE IF NOT EXISTS posts (
@@ -131,6 +133,7 @@ async function initDb() {
       type TEXT,
       from_user_id INTEGER,
       post_id INTEGER DEFAULT NULL,
+      message TEXT DEFAULT NULL,
       is_read INTEGER DEFAULT 0,
       created_at INTEGER,
       FOREIGN KEY(user_id) REFERENCES users(id),
@@ -153,6 +156,15 @@ async function initDb() {
   } catch (e) { /* column may already exist */ }
   try {
     await db.run('ALTER TABLE posts ADD COLUMN category TEXT DEFAULT NULL');
+  } catch (e) { /* column may already exist */ }
+  try {
+    await db.run('ALTER TABLE notifications ADD COLUMN message TEXT DEFAULT NULL');
+  } catch (e) { /* column may already exist */ }
+  try {
+    await db.run("UPDATE users SET avatar = '/default-avatar.png' WHERE avatar IS NULL OR avatar LIKE 'https://ui-avatars.com/%'");
+  } catch (e) { /* ignore */ }
+  try {
+    await db.run('ALTER TABLE users ADD COLUMN recovery_token TEXT');
   } catch (e) { /* column may already exist */ }
   return db;
 }
@@ -189,6 +201,10 @@ function authMiddleware(req, res, next) {
     return { ok: true };
   }
 
+  function generateRecoveryToken() {
+    return crypto.randomBytes(16).toString('hex');
+  }
+
   app.post('/api/register', async (req, res) => {
     const { username, password } = req.body;
     if (!username || !password) return res.status(400).json({ error: 'username and password required' });
@@ -198,13 +214,41 @@ function authMiddleware(req, res, next) {
     if (existing) return res.status(400).json({ error: 'username_taken' });
     const hash = await bcrypt.hash(password, 10);
     const name = username.trim();
+    const recoveryToken = generateRecoveryToken();
     try {
-      const result = await db.run('INSERT INTO users (username, password_hash) VALUES (?, ?)', name, hash);
+      const result = await db.run(
+        'INSERT INTO users (username, password_hash, recovery_token) VALUES (?, ?, ?)',
+        name,
+        hash,
+        recoveryToken
+      );
       const id = result.lastID;
       const token = jwt.sign({ id, username: name }, JWT_SECRET);
-      res.json({ token, username: name, id });
+      res.json({ token, username: name, id, recoveryToken });
     } catch (err) {
       res.status(400).json({ error: 'username_taken' });
+    }
+  });
+
+  app.post('/api/password-reset', async (req, res) => {
+    try {
+      const { username, recoveryToken, newPassword } = req.body || {};
+      if (!username || !recoveryToken || !newPassword) {
+        return res.status(400).json({ error: 'missing_fields' });
+      }
+      const user = await db.get('SELECT id, recovery_token FROM users WHERE LOWER(username) = LOWER(?)', username.trim());
+      if (!user || !user.recovery_token || user.recovery_token !== recoveryToken) {
+        return res.status(400).json({ error: 'invalid_recovery' });
+      }
+      const pwCheck = validatePassword(newPassword);
+      if (!pwCheck.ok) return res.status(400).json({ error: pwCheck.error });
+      const hash = await bcrypt.hash(newPassword, 10);
+      const newToken = generateRecoveryToken();
+      await db.run('UPDATE users SET password_hash = ?, recovery_token = ? WHERE id = ?', hash, newToken, user.id);
+      res.json({ success: true, recoveryToken: newToken });
+    } catch (err) {
+      console.error('Error in POST /api/password-reset:', err);
+      res.status(500).json({ error: err.message });
     }
   });
 
@@ -231,6 +275,11 @@ function authMiddleware(req, res, next) {
         } catch (err) {}
       }
     }
+    let subscribedIds = [];
+    if (userId) {
+      const rows = await db.all('SELECT subscribed_to_id FROM subscriptions WHERE subscriber_id = ?', userId);
+      subscribedIds = rows.map(r => r.subscribed_to_id);
+    }
     const posts = await db.all(`
       SELECT p.id, p.content, p.image, p.audio, p.category, p.created_at, u.id as user_id, u.username, u.avatar
       FROM posts p
@@ -245,7 +294,14 @@ function authMiddleware(req, res, next) {
       if (userId) {
         userReactions = await db.all('SELECT type FROM reactions WHERE post_id = ? AND user_id = ?', p.id, userId);
       }
-      results.push({ ...p, reactions: reactions.reduce((acc, r) => ({ ...acc, [r.type]: r.count }), {}), userReactions: userReactions.map(r => r.type), comments: comments.count });
+      const isSubscribedToAuthor = userId ? subscribedIds.includes(p.user_id) : false;
+      results.push({
+        ...p,
+        reactions: reactions.reduce((acc, r) => ({ ...acc, [r.type]: r.count }), {}),
+        userReactions: userReactions.map(r => r.type),
+        comments: comments.count,
+        isSubscribedToAuthor
+      });
     }
     res.json(results);
   });
@@ -264,9 +320,63 @@ function authMiddleware(req, res, next) {
       const reactions = await db.all('SELECT type, COUNT(*) as count FROM reactions WHERE post_id = ? GROUP BY type', p.id);
       const comments = await db.get('SELECT COUNT(*) as count FROM comments WHERE post_id = ?', p.id);
       const userReactions = await db.all('SELECT type FROM reactions WHERE post_id = ? AND user_id = ?', p.id, userId);
-      results.push({ ...p, reactions: reactions.reduce((acc, r) => ({ ...acc, [r.type]: r.count }), {}), userReactions: userReactions.map(r => r.type), comments: comments.count });
+      results.push({
+        ...p,
+        reactions: reactions.reduce((acc, r) => ({ ...acc, [r.type]: r.count }), {}),
+        userReactions: userReactions.map(r => r.type),
+        comments: comments.count,
+        isSubscribedToAuthor: true
+      });
     }
     res.json(results);
+  });
+
+  app.get('/api/posts/:id/full', async (req, res) => {
+    const postId = parseInt(req.params.id, 10);
+    if (!postId) return res.status(400).json({ error: 'invalid id' });
+
+    const auth = req.headers.authorization;
+    let userId = null;
+    if (auth) {
+      const parts = auth.split(' ');
+      if (parts.length === 2 && parts[0] === 'Bearer') {
+        try {
+          const payload = jwt.verify(parts[1], JWT_SECRET);
+          userId = payload.id;
+        } catch (err) {}
+      }
+    }
+
+    const p = await db.get(`
+      SELECT p.id, p.content, p.image, p.audio, p.category, p.created_at,
+             u.id as user_id, u.username, u.avatar
+      FROM posts p
+      JOIN users u ON u.id = p.user_id
+      WHERE p.id = ?
+    `, postId);
+    if (!p) return res.status(404).json({ error: 'post not found' });
+
+    const reactions = await db.all('SELECT type, COUNT(*) as count FROM reactions WHERE post_id = ? GROUP BY type', p.id);
+    const comments = await db.get('SELECT COUNT(*) as count FROM comments WHERE post_id = ?', p.id);
+    let userReactions = [];
+    let isSubscribedToAuthor = false;
+    if (userId) {
+      userReactions = await db.all('SELECT type FROM reactions WHERE post_id = ? AND user_id = ?', p.id, userId);
+      const sub = await db.get(
+        'SELECT 1 FROM subscriptions WHERE subscriber_id = ? AND subscribed_to_id = ?',
+        userId,
+        p.user_id
+      );
+      isSubscribedToAuthor = !!sub;
+    }
+
+    res.json({
+      ...p,
+      reactions: reactions.reduce((acc, r) => ({ ...acc, [r.type]: r.count }), {}),
+      userReactions: userReactions.map(r => r.type),
+      comments: comments.count,
+      isSubscribedToAuthor
+    });
   });
 
   app.post('/api/posts', authMiddleware, async (req, res) => {
@@ -502,7 +612,9 @@ function authMiddleware(req, res, next) {
 
   app.get('/api/notifications', authMiddleware, async (req, res) => {
     const notifications = await db.all(`
-      SELECT n.id, n.type, n.is_read, n.created_at, u.id as from_user_id, u.username, u.avatar, p.id as post_id, p.content as post_content
+      SELECT n.id, n.type, n.is_read, n.created_at, n.message as message,
+             u.id as from_user_id, u.username, u.avatar,
+             p.id as post_id, p.content as post_content
       FROM notifications n
       JOIN users u ON u.id = n.from_user_id
       LEFT JOIN posts p ON p.id = n.post_id
@@ -520,6 +632,35 @@ function authMiddleware(req, res, next) {
   app.post('/api/notifications/mark-all-read', authMiddleware, async (req, res) => {
     await db.run('UPDATE notifications SET is_read = 1 WHERE user_id = ?', req.user.id);
     res.json({ success: true });
+  });
+
+  app.post('/api/system-notifications', authMiddleware, async (req, res) => {
+    try {
+      const { content } = req.body || {};
+      if (!content || !content.trim()) {
+        return res.status(400).json({ error: 'content required' });
+      }
+      if (!req.user || req.user.username !== 'blau3') {
+        return res.status(403).json({ error: 'forbidden' });
+      }
+      const adminId = req.user.id;
+      const created_at = Date.now();
+      const users = await db.all('SELECT id FROM users WHERE id != ?', adminId);
+      for (const u of users) {
+        await db.run(
+          'INSERT INTO notifications (user_id, type, from_user_id, post_id, message, created_at) VALUES (?, ?, ?, NULL, ?, ?)',
+          u.id,
+          'system',
+          adminId,
+          content.trim(),
+          created_at
+        );
+      }
+      res.json({ success: true, delivered: users.length });
+    } catch (err) {
+      console.error('Error in POST /api/system-notifications:', err);
+      res.status(500).json({ error: err.message });
+    }
   });
 
   app.post('/api/messages/:userId', authMiddleware, async (req, res) => {
