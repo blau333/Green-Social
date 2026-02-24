@@ -33,7 +33,23 @@ const i18n = {
     searchUserById: 'Search user',
     userIdPlaceholder: 'User ID',
     userNotFound: 'User not found',
-    profileId: 'ID'
+    profileId: 'ID',
+    createSystemNotification: 'Create system notification',
+    systemNotification: 'System notification',
+    youSubscribed: 'You subscribed',
+    unsubscribeConfirm: 'Unsubscribe from this user?',
+    forgotPassword: 'Forgot password?',
+    recoveryCode: 'Recovery code',
+    recoveryCodeHint: 'This code is shown only once. Save it to be able to reset your password.',
+    recoveryCodeTitle: 'Save your recovery code',
+    recoveryCodeLabel: 'Your recovery code:',
+    resetPassword: 'Reset password',
+    newPassword: 'New password',
+    repeatNewPassword: 'Repeat new password',
+    resetSuccess: 'Password has been reset. Use the new password to login.',
+    invalidRecovery: 'Invalid username or recovery code',
+    missingFields: 'Please fill in all fields',
+    newRecoveryCodeInfo: 'Your new recovery code:'
   },
   ru: {
     login: 'Вход', register: 'Регистрация', logout: 'Выход', hi: 'Йоу,', welcome: 'Добро пожаловать', postPlaceholder: 'Что нового?', post: 'Опубликовать', comments: 'Комментарии', writeComment: 'Написать комментарий', send: 'Отправить', create: 'Создать', cancel: 'Отмена', loginFailed: 'Ошибка входа', regFailed: 'Ошибка регистрации', loginTitle: 'Вход', registerTitle: 'Создать аккаунт', reactLike: 'Нравится', reactLove: 'Люблю', reactFunny: 'Смешно', loginToReact: 'Войдите чтобы реагировать', loginToComment: 'Войдите чтобы комментировать', loginToPost: 'Войдите чтобы публиковать', subscribe: 'Подписаться', unsubscribe: 'Отписаться', subscribers: 'Подписчики', editProfile: 'Редактировать профиль', notifications: 'Уведомления', noNotifications: 'Нет уведомлений', markAllAsRead: 'Отметить все как прочитанные', subscribedYou: 'подписался на вас', postedNew: 'опубликовал новый пост', feed: 'Лента', subscriptions: 'Подписки', messages: 'Сообщения', noMessages: 'Нет сообщений', typeMessage: 'Напишите сообщение...', sendMessage: 'Написать сообщение',
@@ -60,7 +76,23 @@ const i18n = {
     searchUserById: 'Найти пользователя',
     userIdPlaceholder: 'ID пользователя',
     userNotFound: 'Пользователь не найден',
-    profileId: 'ID'
+    profileId: 'ID',
+    createSystemNotification: 'Создать системное уведомление',
+    systemNotification: 'Системное уведомление',
+    youSubscribed: 'Вы подписаны',
+    unsubscribeConfirm: 'Отписаться от пользователя?',
+    forgotPassword: 'Забыли пароль?',
+    recoveryCode: 'Код восстановления',
+    recoveryCodeHint: 'Этот код показывается только один раз. Сохраните его, чтобы можно было восстановить доступ.',
+    recoveryCodeTitle: 'Сохраните код восстановления',
+    recoveryCodeLabel: 'Ваш код восстановления:',
+    resetPassword: 'Сбросить пароль',
+    newPassword: 'Новый пароль',
+    repeatNewPassword: 'Повторите новый пароль',
+    resetSuccess: 'Пароль сброшен. Используйте новый пароль для входа.',
+    invalidRecovery: 'Неверный логин или код восстановления',
+    missingFields: 'Заполните все поля',
+    newRecoveryCodeInfo: 'Ваш новый код восстановления:'
   }
 };
 
@@ -131,14 +163,7 @@ function renderHeaderUserAvatar() {
   avatarEl.classList.remove('hidden');
   avatarEl.onclick = () => showProfile(state.user.id);
 
-  if (state.user.avatar) {
-    avatarEl.src = state.user.avatar;
-  } else {
-    // Fallback until we fetch the real avatar
-    avatarEl.src = 'data:image/svg+xml;utf8,' + encodeURIComponent(
-      `<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64"><rect width="100%" height="100%" rx="32" ry="32" fill="#d1fae5"/><text x="50%" y="54%" text-anchor="middle" font-size="28">👤</text></svg>`
-    );
-  }
+  avatarEl.src = state.user.avatar || '/default-avatar.png';
 }
 
 async function ensureCurrentUserAvatar() {
@@ -206,6 +231,7 @@ function switchPage(page) {
   const feedPage = document.getElementById('feed-page');
   const subscriptionsPage = document.getElementById('subscriptions-page');
   const notificationsPage = document.getElementById('notifications-page');
+  const profilePage = document.getElementById('profile-page');
   const feedTab = document.getElementById('tab-feed');
   const subscriptionsTab = document.getElementById('tab-subscriptions');
   const notificationsTab = document.getElementById('tab-notifications');
@@ -213,6 +239,7 @@ function switchPage(page) {
   feedPage?.classList.remove('active');
   subscriptionsPage?.classList.remove('active');
   notificationsPage?.classList.remove('active');
+  profilePage?.classList.remove('active');
   feedTab?.classList.remove('active');
   subscriptionsTab?.classList.remove('active');
   notificationsTab?.classList.remove('active');
@@ -228,6 +255,8 @@ function switchPage(page) {
     notificationsPage?.classList.add('active');
     notificationsTab?.classList.add('active');
     loadNotificationsPage();
+  } else if (page === 'profile') {
+    profilePage?.classList.add('active');
   }
 }
 
@@ -269,7 +298,16 @@ function makeModal(innerHtml){
 }
 
 function showLogin(){
-  const { root } = makeModal(`<h2>${t('loginTitle')}</h2><input id="li-user" placeholder="username"><input id="li-pass" type="password" placeholder="password"><div class="actions"><button id="li-cancel">${t('cancel')}</button><button id="li-submit">${t('login')}</button></div>`);
+  const { root } = makeModal(`
+    <h2>${t('loginTitle')}</h2>
+    <input id="li-user" placeholder="username">
+    <input id="li-pass" type="password" placeholder="password">
+    <div class="actions">
+      <button id="li-cancel">${t('cancel')}</button>
+      <button id="li-submit">${t('login')}</button>
+    </div>
+    <button id="li-forgot" class="link" type="button" style="margin-top:8px">${t('forgotPassword')}</button>
+  `);
   document.getElementById('li-cancel').onclick = () => root.remove();
   document.getElementById('li-submit').onclick = async () => {
     const username = document.getElementById('li-user').value;
@@ -278,6 +316,13 @@ function showLogin(){
     if (res.token) setAuth(res.token, { username: res.username, id: res.id }); else alert(res.error || t('loginFailed'));
     root.remove();
   };
+  const forgotBtn = document.getElementById('li-forgot');
+  if (forgotBtn) {
+    forgotBtn.onclick = () => {
+      root.remove();
+      showPasswordReset();
+    };
+  }
 }
 
 function showRegister(){
@@ -349,8 +394,60 @@ function showRegister(){
       return;
     }
     const res = await api.post('/register', { username, password });
-    if (res.token) setAuth(res.token, { username: res.username, id: res.id }); else alert(t(res.error) || res.error || t('regFailed'));
+    if (res.token) {
+      setAuth(res.token, { username: res.username, id: res.id });
+      if (res.recoveryToken) {
+        alert(`${t('recoveryCodeTitle')}\n\n${t('recoveryCodeLabel')} ${res.recoveryToken}\n\n${t('recoveryCodeHint')}`);
+      }
+    } else {
+      alert(t(res.error) || res.error || t('regFailed'));
+    }
     root.remove();
+  };
+}
+
+function showPasswordReset() {
+  const { root } = makeModal(`
+    <h2>${t('resetPassword')}</h2>
+    <input id="rp-user" placeholder="username">
+    <input id="rp-code" placeholder="${t('recoveryCode')}">
+    <input id="rp-pass" type="password" placeholder="${t('newPassword')}">
+    <input id="rp-pass2" type="password" placeholder="${t('repeatNewPassword')}">
+    <div class="actions">
+      <button id="rp-cancel">${t('cancel')}</button>
+      <button id="rp-submit">${t('resetPassword')}</button>
+    </div>
+  `);
+  document.getElementById('rp-cancel').onclick = () => root.remove();
+  document.getElementById('rp-submit').onclick = async () => {
+    const username = document.getElementById('rp-user').value.trim();
+    const code = document.getElementById('rp-code').value.trim();
+    const password = document.getElementById('rp-pass').value;
+    const password2 = document.getElementById('rp-pass2').value;
+    if (!username || !code || !password || !password2) {
+      alert(t('missingFields'));
+      return;
+    }
+    if (password !== password2) {
+      alert(t('password_confirm_mismatch'));
+      return;
+    }
+    const pwCheck = validatePassword(password);
+    if (!pwCheck.ok) {
+      alert(t(pwCheck.error));
+      return;
+    }
+    const res = await api.post('/password-reset', {
+      username,
+      recoveryToken: code,
+      newPassword: password
+    });
+    if (res.success) {
+      alert(`${t('resetSuccess')}${res.recoveryToken ? `\n\n${t('newRecoveryCodeInfo')} ${res.recoveryToken}` : ''}`);
+      root.remove();
+    } else {
+      alert(t(res.error) || res.error || t('invalidRecovery'));
+    }
   };
 }
 
@@ -418,6 +515,44 @@ function renderPostsInto(posts, containerId) {
     rightMeta.style.flexDirection = 'column';
     rightMeta.style.alignItems = 'flex-end';
     rightMeta.appendChild(time);
+
+    if (state.user && state.user.id !== p.user_id) {
+      const subBtn = document.createElement('button');
+      const updateSubBtnView = () => {
+        const subscribed = !!p.isSubscribedToAuthor;
+        subBtn.textContent = subscribed ? t('youSubscribed') : t('subscribe');
+        subBtn.className = subscribed ? 'link subscribe-btn subscribed' : 'btn-primary subscribe-btn';
+      };
+      updateSubBtnView();
+      subBtn.style.marginTop = '4px';
+      subBtn.onclick = async (e) => {
+        e.stopPropagation();
+        if (!state.token) {
+          alert(t('loginToPost'));
+          return;
+        }
+        try {
+          if (!p.isSubscribedToAuthor) {
+            const result = await api.post(`/subscribe/${p.user_id}`, {}, state.token);
+            if (result && result.subscribed) {
+              p.isSubscribedToAuthor = true;
+              updateSubBtnView();
+            }
+          } else {
+            const confirmMsg = t('unsubscribeConfirm') || 'Unsubscribe from this user?';
+            if (!confirm(confirmMsg)) return;
+            const result = await api.post(`/unsubscribe/${p.user_id}`, {}, state.token);
+            if (result && result.subscribed === false) {
+              p.isSubscribedToAuthor = false;
+              updateSubBtnView();
+            }
+          }
+        } catch (err) {
+          console.error('Subscription toggle failed', err);
+        }
+      };
+      rightMeta.appendChild(subBtn);
+    }
 
     if (p.category) {
       const catTag = document.createElement('button');
@@ -518,6 +653,22 @@ async function loadPosts() {
   allFeedPosts = Array.isArray(posts) ? posts : [];
   renderCategoryBar(allFeedPosts);
   renderPostsInto(getFilteredFeedPosts(), 'posts');
+}
+
+async function showPostModal(postId) {
+  try {
+    const post = await api.get(`/posts/${postId}/full`, state.token);
+    if (!post || !post.id) {
+      alert(state.lang === 'ru' ? 'Пост не найден' : 'Post not found');
+      return;
+    }
+    const { root, card } = makeModal('<div id="single-post-modal"></div>');
+    const containerId = 'single-post-modal';
+    renderPostsInto([post], containerId);
+  } catch (err) {
+    console.error('Failed to load post', err);
+    alert(state.lang === 'ru' ? 'Не удалось открыть пост' : 'Failed to open post');
+  }
 }
 
 function getFilteredFeedPosts() {
@@ -837,25 +988,64 @@ document.getElementById('btn-post').onclick = async () => {
 async function showProfile(userId) {
   const res = await api.get(`/users/${userId}`, state.token);
   if (!res.id) return alert(t('userNotFound'));
-  const modal = document.createElement('div'); modal.className='modal-root profile-fullpage';
-  const card = document.createElement('div'); card.className='modal-card'; card.style.overflowY='auto';
-  const close = document.createElement('button'); close.textContent = '✕'; close.style.position = 'absolute'; close.style.top='8px'; close.style.right='8px'; close.style.background='transparent'; close.style.border='none'; close.style.cursor='pointer'; close.style.fontSize='20px';
-  close.onclick = () => modal.remove();
-  const avatar = document.createElement('img'); avatar.src = res.avatar; avatar.className='avatar-large'; avatar.style.cursor = state.token && state.user.id === userId ? 'pointer' : 'default';
-  if (state.token && state.user.id === userId) avatar.onclick = showAvatarUpload;
-  const username = document.createElement('h2'); username.textContent = formatUsername(res.username);
-  const idLine = document.createElement('p'); idLine.className = 'profile-id-line'; idLine.textContent = `${t('profileId')}: ${res.id}`; idLine.style.color = 'var(--muted)'; idLine.style.fontSize = '13px'; idLine.style.marginTop = '2px';
-  const bio = document.createElement('p'); bio.textContent = res.bio || '(no bio)'; bio.style.color = 'var(--muted)';
-  
-  // Add subscribers count
-  const subscribersDiv = document.createElement('div'); subscribersDiv.style.marginBottom = '12px';
-  const subscribersBtn = document.createElement('button'); subscribersBtn.textContent = `👥 ${res.subscribers || 0} ${t('subscribers')}`; subscribersBtn.className = 'link'; subscribersBtn.style.marginRight = '12px';
-  subscribersDiv.appendChild(subscribersBtn);
-  
-  // Add subscribe/unsubscribe button if not own profile
-  let subscribeBtn = null;
-  if (state.token && state.user.id !== userId) {
-    subscribeBtn = document.createElement('button');
+
+  const page = document.getElementById('profile-page');
+  if (!page) return;
+
+  page.innerHTML = '';
+
+  const headerCard = document.createElement('div');
+  headerCard.className = 'card profile-header-card';
+
+  const topRow = document.createElement('div');
+  topRow.style.display = 'flex';
+  topRow.style.alignItems = 'center';
+  topRow.style.gap = '12px';
+
+  const avatar = document.createElement('img');
+  avatar.src = res.avatar || '/default-avatar.png';
+  avatar.className = 'avatar-large';
+  if (state.token && state.user && state.user.id === userId) {
+    avatar.style.cursor = 'pointer';
+    avatar.onclick = showAvatarUpload;
+  }
+
+  const nameCol = document.createElement('div');
+  const usernameEl = document.createElement('h2');
+  usernameEl.textContent = formatUsername(res.username);
+  usernameEl.style.margin = '0';
+
+  const idLine = document.createElement('p');
+  idLine.className = 'profile-id-line';
+  idLine.textContent = `${t('profileId')}: ${res.id}`;
+  idLine.style.color = 'var(--muted)';
+  idLine.style.fontSize = '13px';
+  idLine.style.margin = '2px 0 0 0';
+
+  nameCol.appendChild(usernameEl);
+  nameCol.appendChild(idLine);
+
+  topRow.appendChild(avatar);
+  topRow.appendChild(nameCol);
+
+  const bio = document.createElement('p');
+  bio.textContent = res.bio || '(no bio)';
+  bio.style.color = 'var(--muted)';
+  bio.style.marginTop = '12px';
+
+  const actionsRow = document.createElement('div');
+  actionsRow.style.display = 'flex';
+  actionsRow.style.flexWrap = 'wrap';
+  actionsRow.style.gap = '8px';
+  actionsRow.style.marginTop = '12px';
+
+  const subscribersBtn = document.createElement('button');
+  subscribersBtn.textContent = `👥 ${res.subscribers || 0} ${t('subscribers')}`;
+  subscribersBtn.className = 'link';
+  actionsRow.appendChild(subscribersBtn);
+
+  if (state.token && state.user && state.user.id !== userId) {
+    const subscribeBtn = document.createElement('button');
     subscribeBtn.textContent = res.isSubscribed ? t('unsubscribe') : t('subscribe');
     subscribeBtn.className = res.isSubscribed ? 'link' : 'btn-primary';
     subscribeBtn.onclick = async () => {
@@ -867,36 +1057,61 @@ async function showProfile(userId) {
         subscribeBtn.className = res.isSubscribed ? 'link' : 'btn-primary';
       }
     };
-    subscribersDiv.appendChild(subscribeBtn);
+    actionsRow.appendChild(subscribeBtn);
   }
-  
-  const editBtn = state.token && state.user.id === userId ? document.createElement('button') : null;
-  if (editBtn) { editBtn.textContent = t('editProfile'); editBtn.onclick = showEditProfile; }
 
-  let logoutBtn = null;
-  if (state.token && state.user.id === userId) {
-    logoutBtn = document.createElement('button');
+  if (state.token && state.user && state.user.id === userId) {
+    const editBtn = document.createElement('button');
+    editBtn.textContent = t('editProfile');
+    editBtn.onclick = showEditProfile;
+    actionsRow.appendChild(editBtn);
+
+    const logoutBtn = document.createElement('button');
     logoutBtn.textContent = t('logout');
-    logoutBtn.style.marginTop = '12px';
     logoutBtn.onclick = () => {
-      modal.remove();
       clearAuth();
+      switchPage('feed');
     };
+    actionsRow.appendChild(logoutBtn);
   }
-  const postsTitle = document.createElement('h3'); postsTitle.textContent = `${t('post')}s (${res.posts.length})`;
-  const postsList = document.createElement('div');
-  for (const p of res.posts) {
-    const postDiv = document.createElement('div'); postDiv.className='card'; postDiv.style.marginTop='8px';
-    postDiv.innerHTML = `<strong>${p.content}</strong><br><small>${new Date(p.created_at).toLocaleString()}</small>`;
-    postsList.appendChild(postDiv);
+
+  headerCard.appendChild(topRow);
+  headerCard.appendChild(bio);
+  headerCard.appendChild(actionsRow);
+
+  page.appendChild(headerCard);
+
+  const postsWrapper = document.createElement('div');
+  postsWrapper.className = 'profile-posts-wrapper';
+
+  const postsTitle = document.createElement('h3');
+  postsTitle.textContent = `${t('post')}s (${res.posts.length})`;
+  postsTitle.style.marginTop = '16px';
+  postsWrapper.appendChild(postsTitle);
+
+  const postsContainer = document.createElement('div');
+  postsContainer.id = 'profile-posts';
+  postsWrapper.appendChild(postsContainer);
+
+  page.appendChild(postsWrapper);
+
+  if (res.posts && res.posts.length) {
+    const fullPosts = [];
+    for (const p of res.posts) {
+      try {
+        const full = await api.get(`/posts/${p.id}/full`, state.token);
+        if (full && full.id) fullPosts.push(full);
+      } catch (e) {
+        console.error('Failed to load full post for profile', e);
+      }
+    }
+    if (fullPosts.length) {
+      renderPostsInto(fullPosts, 'profile-posts');
+    }
   }
-  card.appendChild(close); card.appendChild(avatar); card.appendChild(username); card.appendChild(idLine); card.appendChild(bio); card.appendChild(subscribersDiv);
-  if (editBtn) card.appendChild(editBtn);
-  card.appendChild(postsTitle); card.appendChild(postsList);
-  if (logoutBtn) card.appendChild(logoutBtn);
-  modal.appendChild(card);
-  modal.addEventListener('click', (e)=>{ if (e.target === modal) modal.remove(); });
-  document.body.appendChild(modal);
+
+  switchPage('profile');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 function showAvatarUpload() {
@@ -998,6 +1213,10 @@ async function showNotifications() {
         if (n.post_content) {
           message += `: "${n.post_content.substring(0, 50)}${n.post_content.length > 50 ? '...' : ''}"`;
         }
+      } else if (n.type === 'system') {
+        const text = n.message || '';
+        const snippet = text.length > 50 ? text.substring(0, 50) + '...' : text;
+        message = ` ${t('systemNotification')}${snippet ? `: "${snippet}"` : ''}`;
       }
       
       const msgSpan = document.createElement('span');
@@ -1051,6 +1270,42 @@ async function showNotifications() {
   updateNotificationsTab(unreadCount);
 }
 
+function showCreateSystemNotificationModal() {
+  if (!state.token || !state.user || state.user.username !== 'blau3') {
+    alert('Only blau3 can send system notifications');
+    return;
+  }
+  const placeholder = state.lang === 'ru' ? 'Текст системного уведомления' : 'System notification text';
+  const { root } = makeModal(`
+    <h2>${t('createSystemNotification')}</h2>
+    <textarea id="system-notification-text" style="width:100%;height:100px" placeholder="${placeholder}"></textarea>
+    <div class="actions">
+      <button id="system-notification-cancel">${t('cancel')}</button>
+      <button id="system-notification-submit" class="btn-primary">${t('create')}</button>
+    </div>
+  `);
+  document.getElementById('system-notification-cancel').onclick = () => root.remove();
+  document.getElementById('system-notification-submit').onclick = async () => {
+    const el = document.getElementById('system-notification-text');
+    const content = el.value.trim();
+    if (!content) {
+      alert(state.lang === 'ru' ? 'Введите текст уведомления' : 'Enter notification text');
+      return;
+    }
+    try {
+      const res = await api.post('/system-notifications', { content }, state.token);
+      if (res && res.success) {
+        root.remove();
+        loadNotificationsPage();
+      } else {
+        alert(res.error || (state.lang === 'ru' ? 'Не удалось отправить уведомление' : 'Failed to send notification'));
+      }
+    } catch (e) {
+      alert(e.message || (state.lang === 'ru' ? 'Не удалось отправить уведомление' : 'Failed to send notification'));
+    }
+  };
+}
+
 async function loadNotificationsPage() {
   const response = await api.get('/notifications', state.token);
   const notifications = Array.isArray(response) ? response : [];
@@ -1062,6 +1317,22 @@ async function loadNotificationsPage() {
   }
   
   container.innerHTML = '';
+
+  if (state.user && state.user.username === 'blau3') {
+    const adminBar = document.createElement('div');
+    adminBar.style.display = 'flex';
+    adminBar.style.justifyContent = 'flex-start';
+    adminBar.style.gap = '8px';
+    adminBar.style.marginBottom = '16px';
+
+    const createBtn = document.createElement('button');
+    createBtn.textContent = t('createSystemNotification');
+    createBtn.className = 'btn-primary';
+    createBtn.onclick = () => showCreateSystemNotificationModal();
+
+    adminBar.appendChild(createBtn);
+    container.appendChild(adminBar);
+  }
   
   if (notifications.length === 0) {
     const emptyMsg = document.createElement('div');
@@ -1120,6 +1391,10 @@ async function loadNotificationsPage() {
       if (n.post_content) {
         message += `: "${n.post_content.substring(0, 60)}${n.post_content.length > 60 ? '...' : ''}"`;
       }
+    } else if (n.type === 'system') {
+      const text = n.message || '';
+      const snippet = text.length > 60 ? text.substring(0, 60) + '...' : text;
+      message = ` ${t('systemNotification')}${snippet ? `: "${snippet}"` : ''}`;
     }
     
     const msgSpan = document.createElement('span');
