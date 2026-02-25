@@ -63,11 +63,75 @@ app.get('/admin', isAdmin, (req, res) => {
     </ul>
 
     <script>
+      function showAdminConfirm(message) {
+        return new Promise(resolve => {
+          const root = document.createElement('div');
+          root.style.position = 'fixed';
+          root.style.inset = '0';
+          root.style.background = 'rgba(0,0,0,0.4)';
+          root.style.display = 'flex';
+          root.style.alignItems = 'center';
+          root.style.justifyContent = 'center';
+          root.style.zIndex = '9999';
+          const card = document.createElement('div');
+          card.style.background = '#fff';
+          card.style.borderRadius = '18px';
+          card.style.padding = '16px';
+          card.style.minWidth = '260px';
+          card.style.boxShadow = '0 10px 30px rgba(0,0,0,0.2)';
+          card.innerHTML = '<h3 style="margin-top:0">Подтверждение</h3><p>' + message + '</p>';
+          const actions = document.createElement('div');
+          actions.style.display = 'flex';
+          actions.style.justifyContent = 'flex-end';
+          actions.style.gap = '8px';
+          const cancelBtn = document.createElement('button');
+          cancelBtn.textContent = 'Отмена';
+          const okBtn = document.createElement('button');
+          okBtn.textContent = 'Удалить';
+          okBtn.style.background = '#c0392b';
+          okBtn.style.color = '#fff';
+          okBtn.style.border = 'none';
+          okBtn.style.padding = '6px 12px';
+          okBtn.style.borderRadius = '4px';
+          actions.appendChild(cancelBtn);
+          actions.appendChild(okBtn);
+          card.appendChild(actions);
+          root.appendChild(card);
+          document.body.appendChild(root);
+          cancelBtn.onclick = () => { document.body.removeChild(root); resolve(false); };
+          okBtn.onclick = () => { document.body.removeChild(root); resolve(true); };
+        });
+      }
+      function showAdminAlert(message) {
+        const root = document.createElement('div');
+        root.style.position = 'fixed';
+        root.style.inset = '0';
+        root.style.background = 'rgba(0,0,0,0.4)';
+        root.style.display = 'flex';
+        root.style.alignItems = 'center';
+        root.style.justifyContent = 'center';
+        root.style.zIndex = '9999';
+        const card = document.createElement('div');
+        card.style.background = '#fff';
+        card.style.borderRadius = '18px';
+        card.style.padding = '16px';
+        card.style.minWidth = '260px';
+        card.style.boxShadow = '0 10px 30px rgba(0,0,0,0.2)';
+        card.innerHTML = '<p style="margin-top:0">' + message + '</p>';
+        const btn = document.createElement('button');
+        btn.textContent = 'OK';
+        btn.style.marginTop = '12px';
+        btn.onclick = () => document.body.removeChild(root);
+        card.appendChild(btn);
+        root.appendChild(card);
+        document.body.appendChild(root);
+      }
       async function deletePost(id) {
-        if(!confirm('Удалить этот пост?')) return;
+        const confirmed = await showAdminConfirm('Удалить этот пост?');
+        if(!confirmed) return;
         const res = await fetch('/api/posts/' + id, { method: 'DELETE' });
         if(res.ok) location.reload();
-        else alert('Ошибка при удалении');
+        else showAdminAlert('Ошибка при удалении');
       }
     </script>
   `;
