@@ -9,7 +9,7 @@ const reactions = {
 
 const i18n = {
   en: {
-    login: 'Login', register: 'Register', logout: 'Logout', hi: 'Yo,', welcome: 'Welcome', postPlaceholder: "Bro, whats wrong or send meme :)", post: 'Опубликовать', comments: 'Comments', writeComment: 'Write a comment', send: 'Send', create: 'Create', cancel: 'Cancel', loginFailed: 'Login failed', regFailed: 'Registration failed', loginTitle: 'Sign in', registerTitle: 'Create account', reactLike: 'Like', reactLove: 'Love', reactFunny: 'Funny', loginToReact: 'Login to react', loginToComment: 'Login to comment', loginToPost: 'Login to post', subscribe: 'Subscribe', unsubscribe: 'Unsubscribe', subscribers: 'Subscribers', editProfile: 'Edit Profile', notifications: 'Notifications', noNotifications: 'No notifications', markAllAsRead: 'Mark all as read', subscribedYou: 'subscribed to you', postedNew: 'posted a new post', feed: 'Feed', subscriptions: 'Subscriptions', messages: 'Messages', noMessages: 'No messages', typeMessage: 'Type a message...', sendMessage: 'Send Message',
+    login: 'Login', register: 'Register', logout: 'Logout', hi: 'Yo,', welcome: 'Welcome', postPlaceholder: "Bro, whats wrong or send meme :)", post: 'Publish', publishedPosts: 'Published posts', comments: 'Comments', writeComment: 'Write a comment', send: 'Send', create: 'Create', cancel: 'Cancel', loginFailed: 'Login failed', regFailed: 'Registration failed', loginTitle: 'Sign in', registerTitle: 'Create account', reactLike: 'Like', reactLove: 'Love', reactFunny: 'Funny', loginToReact: 'Login to react', loginToComment: 'Login to comment', loginToPost: 'Login to post', subscribe: 'Subscribe', unsubscribe: 'Unsubscribe', subscribers: 'Subscribers', editProfile: 'Edit Profile', notifications: 'Notifications', noNotifications: 'No notifications', markAllAsRead: 'Mark all as read', subscribedYou: 'subscribed to you', postedNew: 'posted a new post', feed: 'Feed', subscriptions: 'Subscriptions', messages: 'Messages', noMessages: 'No messages', typeMessage: 'Type a message...', sendMessage: 'Send Message',
     passwordRequirements: 'At least 8 characters, one uppercase, one lowercase, one digit, one special character',
     password_min_length: 'Password must be at least 8 characters',
     password_need_upper: 'Password must contain at least one uppercase letter',
@@ -52,7 +52,7 @@ const i18n = {
     newRecoveryCodeInfo: 'Your new recovery code:'
   },
   ru: {
-    login: 'Вход', register: 'Регистрация', logout: 'Выход', hi: 'Йоу,', welcome: 'Добро пожаловать', postPlaceholder: 'Что нового?', post: 'Опубликовать', comments: 'Комментарии', writeComment: 'Написать комментарий', send: 'Отправить', create: 'Создать', cancel: 'Отмена', loginFailed: 'Ошибка входа', regFailed: 'Ошибка регистрации', loginTitle: 'Вход', registerTitle: 'Создать аккаунт', reactLike: 'Нравится', reactLove: 'Люблю', reactFunny: 'Смешно', loginToReact: 'Войдите чтобы реагировать', loginToComment: 'Войдите чтобы комментировать', loginToPost: 'Войдите чтобы публиковать', subscribe: 'Подписаться', unsubscribe: 'Отписаться', subscribers: 'Подписчики', editProfile: 'Редактировать профиль', notifications: 'Уведомления', noNotifications: 'Нет уведомлений', markAllAsRead: 'Отметить все как прочитанные', subscribedYou: 'подписался на вас', postedNew: 'опубликовал новый пост', feed: 'Лента', subscriptions: 'Подписки', messages: 'Сообщения', noMessages: 'Нет сообщений', typeMessage: 'Напишите сообщение...', sendMessage: 'Написать сообщение',
+    login: 'Вход', register: 'Регистрация', logout: 'Выход', hi: 'Йоу,', welcome: 'Добро пожаловать', postPlaceholder: 'Что нового?', post: 'Опубликовать', publishedPosts: 'Опубликованные посты', comments: 'Комментарии', writeComment: 'Написать комментарий', send: 'Отправить', create: 'Создать', cancel: 'Отмена', loginFailed: 'Ошибка входа', regFailed: 'Ошибка регистрации', loginTitle: 'Вход', registerTitle: 'Создать аккаунт', reactLike: 'Нравится', reactLove: 'Люблю', reactFunny: 'Смешно', loginToReact: 'Войдите чтобы реагировать', loginToComment: 'Войдите чтобы комментировать', loginToPost: 'Войдите чтобы публиковать', subscribe: 'Подписаться', unsubscribe: 'Отписаться', subscribers: 'Подписчики', editProfile: 'Редактировать профиль', notifications: 'Уведомления', noNotifications: 'Нет уведомлений', markAllAsRead: 'Отметить все как прочитанные', subscribedYou: 'подписался на вас', postedNew: 'опубликовал новый пост', feed: 'Лента', subscriptions: 'Подписки', messages: 'Сообщения', noMessages: 'Нет сообщений', typeMessage: 'Напишите сообщение...', sendMessage: 'Написать сообщение',
     passwordRequirements: 'Минимум 8 символов, заглавная и строчная буква, цифра и спецсимвол',
     password_min_length: 'Пароль должен быть не короче 8 символов',
     password_need_upper: 'В пароле должна быть хотя бы одна заглавная буква',
@@ -189,25 +189,25 @@ const api = {
     const headers = {};
     if (token) headers.Authorization = 'Bearer ' + token;
     const r = await fetch('/api' + path, { headers });
-    return r.json();
+    return r.json().catch(() => ({}));
   },
   async post(path, body, token) {
     const headers = { 'Content-Type': 'application/json' };
     if (token) headers.Authorization = 'Bearer ' + token;
     const r = await fetch('/api' + path, { method: 'POST', headers, body: JSON.stringify(body) });
-    return r.json();
+    return r.json().catch(() => ({}));
   },
   async put(path, body, token) {
     const headers = { 'Content-Type': 'application/json' };
     if (token) headers.Authorization = 'Bearer ' + token;
     const r = await fetch('/api' + path, { method: 'PUT', headers, body: JSON.stringify(body) });
-    return r.json();
+    return r.json().catch(() => ({}));
   },
   async postFormData(path, formData, token) {
     const headers = {};
     if (token) headers.Authorization = 'Bearer ' + token;
     const r = await fetch('/api' + path, { method: 'POST', headers, body: formData });
-    return r.json();
+    return r.json().catch(() => ({}));
   },
   async delete(path, token) {
     const headers = {};
@@ -286,15 +286,107 @@ function renderAuth(){
   renderHeaderUserAvatar();
 }
 
-function makeModal(innerHtml){
+function showBotCheck(onSuccess){
+  const a = 1 + Math.floor(Math.random() * 9);
+  const b = 1 + Math.floor(Math.random() * 9);
+  const sum = a + b;
+  const title = state.lang === 'ru' ? 'Проверка, что вы не бот' : 'Bot check';
+  const question = state.lang === 'ru'
+    ? `Сколько будет ${a} + ${b}?`
+    : `What is ${a} + ${b}?`;
+  const errorMsg = state.lang === 'ru'
+    ? 'Неверный ответ, попробуйте ещё раз'
+    : 'Wrong answer, please try again';
+
+  const { root } = makeModal(`
+    <h2>${title}</h2>
+    <p>${question}</p>
+    <input id="bot-answer" type="number" placeholder="${state.lang === 'ru' ? 'Введите сумму' : 'Enter the sum'}">
+    <div class="actions">
+      <button data-role="cancel">${t('cancel')}</button>
+      <button data-role="ok" class="btn-primary">OK</button>
+    </div>
+  `);
+  const answerEl = root.querySelector('#bot-answer');
+  const cancelBtn = root.querySelector('button[data-role="cancel"]');
+  const okBtn = root.querySelector('button[data-role="ok"]');
+
+  function tryCheck() {
+    const value = parseInt(answerEl.value, 10);
+    if (value === sum) {
+      root.remove();
+      if (typeof onSuccess === 'function') onSuccess();
+    } else {
+      showAlert(errorMsg);
+    }
+  }
+
+  if (cancelBtn) cancelBtn.onclick = () => root.remove();
+  if (okBtn) okBtn.onclick = () => tryCheck();
+  if (answerEl) {
+    answerEl.onkeydown = (e) => {
+      if (e.key === 'Enter') tryCheck();
+    };
+    answerEl.focus();
+  }
+}
+
+function makeModal(innerHtml, options){
   const root = document.createElement('div'); root.className='modal-root';
   const card = document.createElement('div'); card.className='modal-card';
   card.innerHTML = innerHtml;
   root.appendChild(card);
   document.body.appendChild(root);
-  // allow closing when clicking outside
-  root.addEventListener('click', (e)=>{ if (e.target === root) root.remove(); });
+  const closeOnBackdrop = !options || options.closeOnBackdrop !== false;
+  if (closeOnBackdrop) {
+    // allow closing when clicking outside
+    root.addEventListener('click', (e)=>{ if (e.target === root) root.remove(); });
+  }
   return { root, card };
+}
+
+function showAlert(message, opts){
+  const options = opts || {};
+  const title = options.title || (state.lang === 'ru' ? 'Сообщение' : 'Message');
+  const okLabel = options.okLabel || (state.lang === 'ru' ? 'ОК' : 'OK');
+  const { root } = makeModal(`
+    <h2>${title}</h2>
+    <p>${message}</p>
+    <div class="actions">
+      <button data-role="ok">${okLabel}</button>
+    </div>
+  `);
+  const okBtn = root.querySelector('button[data-role="ok"]');
+  if (okBtn) okBtn.onclick = () => root.remove();
+}
+
+function showConfirm(message, opts){
+  const options = opts || {};
+  const title = options.title || (state.lang === 'ru' ? 'Подтверждение' : 'Confirm');
+  const okLabel = options.okLabel || (state.lang === 'ru' ? 'Да' : 'Yes');
+  const cancelLabel = options.cancelLabel || (state.lang === 'ru' ? 'Нет' : 'No');
+  return new Promise(resolve => {
+    const { root } = makeModal(`
+      <h2>${title}</h2>
+      <p>${message}</p>
+      <div class="actions">
+        <button data-role="cancel">${cancelLabel}</button>
+        <button data-role="ok" class="btn-primary">${okLabel}</button>
+      </div>
+    `, { closeOnBackdrop: false });
+    const okBtn = root.querySelector('button[data-role="ok"]');
+    const cancelBtn = root.querySelector('button[data-role="cancel"]');
+    if (okBtn) okBtn.onclick = () => { root.remove(); resolve(true); };
+    if (cancelBtn) cancelBtn.onclick = () => { root.remove(); resolve(false); };
+    // fallback: resolve as "false" if modal somehow gets removed without clicking
+    const observer = new MutationObserver(() => {
+      if (!document.body.contains(root)) {
+        resolve(false);
+        observer.disconnect();
+      }
+    });
+    observer.observe(document.body, { childList: true });
+  });
 }
 
 function showLogin(){
@@ -313,7 +405,7 @@ function showLogin(){
     const username = document.getElementById('li-user').value;
     const password = document.getElementById('li-pass').value;
     const res = await api.post('/login', { username, password });
-    if (res.token) setAuth(res.token, { username: res.username, id: res.id }); else alert(res.error || t('loginFailed'));
+    if (res.token) setAuth(res.token, { username: res.username, id: res.id }); else showAlert(res.error || t('loginFailed'));
     root.remove();
   };
   const forgotBtn = document.getElementById('li-forgot');
@@ -383,26 +475,29 @@ function showRegister(){
     const username = document.getElementById('rg-user').value.trim();
     const password = document.getElementById('rg-pass').value;
     const password2 = document.getElementById('rg-pass2').value;
-    if (!username) return alert(t('usernameRequired'));
+    if (!username) { showAlert(t('usernameRequired')); return; }
     if (!password || !password2 || password !== password2) {
-      alert(t('password_confirm_mismatch'));
+      showAlert(t('password_confirm_mismatch'));
       return;
     }
     const pwCheck = validatePassword(password);
     if (!pwCheck.ok) {
-      alert(t(pwCheck.error));
+      showAlert(t(pwCheck.error));
       return;
     }
     const res = await api.post('/register', { username, password });
     if (res.token) {
-      setAuth(res.token, { username: res.username, id: res.id });
-      if (res.recoveryToken) {
-        alert(`${t('recoveryCodeTitle')}\n\n${t('recoveryCodeLabel')} ${res.recoveryToken}\n\n${t('recoveryCodeHint')}`);
-      }
+      root.remove();
+      showBotCheck(() => {
+        setAuth(res.token, { username: res.username, id: res.id });
+        if (res.recoveryToken) {
+          showAlert(`${t('recoveryCodeTitle')}\n\n${t('recoveryCodeLabel')} ${res.recoveryToken}\n\n${t('recoveryCodeHint')}`);
+        }
+      });
     } else {
-      alert(t(res.error) || res.error || t('regFailed'));
+      showAlert(t(res.error) || res.error || t('regFailed'));
+      root.remove();
     }
-    root.remove();
   };
 }
 
@@ -425,16 +520,16 @@ function showPasswordReset() {
     const password = document.getElementById('rp-pass').value;
     const password2 = document.getElementById('rp-pass2').value;
     if (!username || !code || !password || !password2) {
-      alert(t('missingFields'));
+      showAlert(t('missingFields'));
       return;
     }
     if (password !== password2) {
-      alert(t('password_confirm_mismatch'));
+      showAlert(t('password_confirm_mismatch'));
       return;
     }
     const pwCheck = validatePassword(password);
     if (!pwCheck.ok) {
-      alert(t(pwCheck.error));
+      showAlert(t(pwCheck.error));
       return;
     }
     const res = await api.post('/password-reset', {
@@ -443,10 +538,10 @@ function showPasswordReset() {
       newPassword: password
     });
     if (res.success) {
-      alert(`${t('resetSuccess')}${res.recoveryToken ? `\n\n${t('newRecoveryCodeInfo')} ${res.recoveryToken}` : ''}`);
+      showAlert(`${t('resetSuccess')}${res.recoveryToken ? `\n\n${t('newRecoveryCodeInfo')} ${res.recoveryToken}` : ''}`);
       root.remove();
     } else {
-      alert(t(res.error) || res.error || t('invalidRecovery'));
+      showAlert(t(res.error) || res.error || t('invalidRecovery'));
     }
   };
 }
@@ -459,7 +554,10 @@ function refreshCurrentFeed() {
 const AUTO_REFRESH_INTERVAL_MS = 30000; // 30 seconds
 
 function autoRefreshCurrentPage() {
-  if (state.currentPage === 'feed') loadPosts();
+  if (state.currentPage === 'feed') {
+    loadPosts();
+    loadStories();
+  }
   else if (state.currentPage === 'subscriptions') loadSubscriptionsPosts();
   else if (state.currentPage === 'notifications') loadNotificationsPage();
 
@@ -475,6 +573,80 @@ function startAutoRefresh() {
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') autoRefreshCurrentPage();
   });
+}
+
+async function loadStories() {
+  if (!state.token) {
+    const bar = document.getElementById('stories-bar');
+    if (bar) {
+      bar.innerHTML = '';
+      bar.classList.add('hidden');
+    }
+    return;
+  }
+  try {
+    const stories = await api.get('/stories', state.token);
+    renderStories(stories || []);
+  } catch (e) {
+    console.error('Failed to load stories', e);
+  }
+}
+
+function renderStories(stories) {
+  const bar = document.getElementById('stories-bar');
+  if (!bar) return;
+  bar.innerHTML = '';
+  if (!stories.length) {
+    bar.classList.add('hidden');
+    return;
+  }
+  bar.classList.remove('hidden');
+  for (const s of stories) {
+    const item = document.createElement('button');
+    item.type = 'button';
+    item.className = 'story-item';
+    const ring = document.createElement('div');
+    ring.className = 'story-avatar-ring';
+    const img = document.createElement('img');
+    img.src = s.avatar || '/default-avatar.png';
+    ring.appendChild(img);
+    const name = document.createElement('div');
+    name.className = 'story-username';
+    name.textContent = s.username;
+    item.appendChild(ring);
+    item.appendChild(name);
+    item.onclick = () => showStoryModal(s);
+    bar.appendChild(item);
+  }
+}
+
+function showStoryModal(story) {
+  const created = new Date(story.created_at).toLocaleString();
+  const mediaPart = story.media
+    ? `<div style="margin-top:8px">${renderStoryMediaHtml(story.media)}</div>`
+    : '';
+  const contentPart = story.content
+    ? `<p style="margin-top:8px; white-space:pre-wrap">${story.content}</p>`
+    : '';
+  const { root } = makeModal(`
+    <h2>${formatUsername(story.username)}</h2>
+    <small class="muted">${created}</small>
+    ${contentPart}
+    ${mediaPart}
+    <div class="actions">
+      <button data-role="close" class="btn-primary">OK</button>
+    </div>
+  `);
+  const closeBtn = root.querySelector('button[data-role="close"]');
+  if (closeBtn) closeBtn.onclick = () => root.remove();
+}
+
+function renderStoryMediaHtml(url) {
+  const lower = url.toLowerCase();
+  if (lower.endsWith('.mp3') || lower.endsWith('.wav') || lower.endsWith('.ogg') || lower.endsWith('.webm')) {
+    return `<audio src="${url}" controls style="width:100%;margin-top:4px"></audio>`;
+  }
+  return `<audio src="${url}" controls style="width:100%;margin-top:4px"></audio>`;
 }
 
 function renderPostsInto(posts, containerId) {
@@ -528,7 +700,7 @@ function renderPostsInto(posts, containerId) {
       subBtn.onclick = async (e) => {
         e.stopPropagation();
         if (!state.token) {
-          alert(t('loginToPost'));
+          showAlert(t('loginToPost'));
           return;
         }
         try {
@@ -540,7 +712,8 @@ function renderPostsInto(posts, containerId) {
             }
           } else {
             const confirmMsg = t('unsubscribeConfirm') || 'Unsubscribe from this user?';
-            if (!confirm(confirmMsg)) return;
+            const confirmed = await showConfirm(confirmMsg);
+            if (!confirmed) return;
             const result = await api.post(`/unsubscribe/${p.user_id}`, {}, state.token);
             if (result && result.subscribed === false) {
               p.isSubscribedToAuthor = false;
@@ -579,13 +752,14 @@ function renderPostsInto(posts, containerId) {
       deleteBtn.className = 'delete-btn';
       deleteBtn.title = t('DeletePost');
       deleteBtn.onclick = async () => {
-        if (!confirm(t('deleteConfirm'))) return;
+        const confirmed = await showConfirm(t('deleteConfirm'));
+        if (!confirmed) return;
         try {
           await api.delete(`/posts/${p.id}`, state.token);
           document.getElementById(`post-${p.id}`)?.remove();
           refreshCurrentFeed();
         } catch (err) {
-          alert(t('deleteError') + ': ' + err.message);
+          showAlert(t('deleteError') + ': ' + err.message);
           console.error(err);
         }
       };
@@ -632,7 +806,7 @@ function renderPostsInto(posts, containerId) {
       btn.className = 'reaction-btn';
       if (p.userReactions && p.userReactions.includes(typeKey)) btn.classList.add('active');
       btn.onclick = async () => {
-        if (!state.token) return alert(t('loginToReact'));
+        if (!state.token) { showAlert(t('loginToReact')); return; }
         await api.post(`/posts/${p.id}/reaction`, { type: typeKey }, state.token);
         refreshCurrentFeed();
       };
@@ -659,7 +833,7 @@ async function showPostModal(postId) {
   try {
     const post = await api.get(`/posts/${postId}/full`, state.token);
     if (!post || !post.id) {
-      alert(state.lang === 'ru' ? 'Пост не найден' : 'Post not found');
+      showAlert(state.lang === 'ru' ? 'Пост не найден' : 'Post not found');
       return;
     }
     const { root, card } = makeModal('<div id="single-post-modal"></div>');
@@ -667,7 +841,7 @@ async function showPostModal(postId) {
     renderPostsInto([post], containerId);
   } catch (err) {
     console.error('Failed to load post', err);
-    alert(state.lang === 'ru' ? 'Не удалось открыть пост' : 'Failed to open post');
+    showAlert(state.lang === 'ru' ? 'Не удалось открыть пост' : 'Failed to open post');
   }
 }
 
@@ -785,7 +959,7 @@ async function toggleComments(card, postId){
     const add = document.createElement('div'); add.style.marginTop='8px';
     const textarea = document.createElement('input'); textarea.placeholder=t('writeComment'); textarea.style.width='70%';
     const btn = document.createElement('button'); btn.textContent='⬆️'; btn.title=t('send'); btn.onclick = async () => {
-      if (!state.token) return alert(t('loginToComment'));
+      if (!state.token) { showAlert(t('loginToComment')); return; }
       const res = await api.post(`/posts/${postId}/comments`, { content: textarea.value }, state.token);
       if (res.id) { refreshCurrentFeed(); }
     };
@@ -820,31 +994,9 @@ document.getElementById('post-image').onchange = (e) => {
   }
 };
 
-let recordedVoiceBlob = null;
-let mediaRecorder = null;
-let recordStream = null;
-
-function updateVoiceHint() {
-  const hint = document.getElementById('audio-file-hint');
-  const statusEl = document.getElementById('voice-record-status');
-  if (recordedVoiceBlob) {
-    if (hint) hint.textContent = '🎤 ' + t('voiceRecorded');
-    if (statusEl) { statusEl.textContent = ''; statusEl.classList.add('hidden'); statusEl.classList.remove('recording', 'recorded'); }
-  } else {
-    const audioInput = document.getElementById('post-audio');
-    if (audioInput.files.length) {
-      if (hint) hint.textContent = '🎵 ' + audioInput.files[0].name;
-    } else {
-      if (hint) hint.remove();
-    }
-    if (statusEl) statusEl.classList.add('hidden');
-  }
-}
-
 document.getElementById('btn-audio').onclick = () => document.getElementById('post-audio').click();
 document.getElementById('post-audio').onchange = (e) => {
   const file = e.target.files[0];
-  recordedVoiceBlob = null;
   let hint = document.getElementById('audio-file-hint');
   if (hint) hint.remove();
   if (file) {
@@ -856,7 +1008,6 @@ document.getElementById('post-audio').onchange = (e) => {
     hint.textContent = '🎵 ' + file.name;
     document.getElementById('post-content').parentElement.insertBefore(hint, document.getElementById('post-content').nextElementSibling);
   }
-  updateVoiceHint();
 };
 
 document.getElementById('btn-video').onclick = () => document.getElementById('post-video').click();
@@ -875,58 +1026,8 @@ document.getElementById('post-video').onchange = (e) => {
   }
 };
 
-document.getElementById('btn-voice-record').onclick = async () => {
-  const btn = document.getElementById('btn-voice-record');
-  const statusEl = document.getElementById('voice-record-status');
-  if (mediaRecorder && mediaRecorder.state === 'recording') {
-    mediaRecorder.stop();
-    return;
-  }
-  try {
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    recordStream = stream;
-    const chunks = [];
-    const mime = MediaRecorder.isTypeSupported('audio/webm;codecs=opus') ? 'audio/webm;codecs=opus' : 'audio/webm';
-    mediaRecorder = new MediaRecorder(stream);
-    mediaRecorder.ondataavailable = (e) => e.data.size && chunks.push(e.data);
-    mediaRecorder.onstop = () => {
-      recordStream.getTracks().forEach(t => t.stop());
-      recordStream = null;
-      mediaRecorder = null;
-      if (chunks.length) {
-        recordedVoiceBlob = new Blob(chunks, { type: mime });
-        let hint = document.getElementById('audio-file-hint');
-        if (!hint) {
-          hint = document.createElement('div');
-          hint.id = 'audio-file-hint';
-          hint.style.fontSize = '12px';
-          hint.style.color = 'var(--muted)';
-          hint.style.marginTop = '4px';
-          document.getElementById('post-content').parentElement.insertBefore(hint, document.getElementById('post-content').nextElementSibling);
-        }
-        hint.textContent = '🎤 ' + t('voiceRecorded');
-        document.getElementById('post-audio').value = '';
-      }
-      if (statusEl) { statusEl.classList.add('hidden'); statusEl.textContent = ''; statusEl.classList.remove('recording', 'recorded'); }
-      btn.title = t('recordVoiceTitle');
-      btn.textContent = '🎤';
-    };
-    mediaRecorder.start(200);
-    btn.textContent = '⏹';
-    btn.title = t('stopRecord');
-    if (statusEl) {
-      statusEl.textContent = t('recording');
-      statusEl.classList.remove('hidden');
-      statusEl.classList.add('recording');
-    }
-  } catch (err) {
-    console.error(err);
-    alert(t('noMic'));
-  }
-};
-
 document.getElementById('btn-post').onclick = async () => {
-  if (!state.token) return alert(t('loginToPost'));
+  if (!state.token) { showAlert(t('loginToPost')); return; }
   const content = document.getElementById('post-content').value;
   const categoryTextInput = document.getElementById('post-category-text');
   const emojiBtn = document.getElementById('post-category-emoji');
@@ -937,9 +1038,9 @@ document.getElementById('btn-post').onclick = async () => {
   const audioInput = document.getElementById('post-audio');
   const videoInput = document.getElementById('post-video');
   const hasImage = imageInput.files.length > 0;
-  const hasAudio = !!recordedVoiceBlob || audioInput.files.length > 0;
+  const hasAudio = audioInput.files.length > 0;
   const hasVideo = videoInput.files.length > 0;
-  if (!content && !hasImage && !hasAudio && !hasVideo) return alert('Please write something or add media');
+  if (!content && !hasImage && !hasAudio && !hasVideo) { showAlert('Please write something or add media'); return; }
   
   try {
     let res;
@@ -948,10 +1049,7 @@ document.getElementById('btn-post').onclick = async () => {
       formData.append('content', content);
       if (category) formData.append('category', category);
       if (hasImage) formData.append('image', imageInput.files[0]);
-      if (recordedVoiceBlob) {
-        const ext = (recordedVoiceBlob.type || '').includes('ogg') ? 'ogg' : 'webm';
-        formData.append('audio', recordedVoiceBlob, 'voice.' + ext);
-      } else if (audioInput.files.length) formData.append('audio', audioInput.files[0]);
+      if (audioInput.files.length) formData.append('audio', audioInput.files[0]);
       if (hasVideo) formData.append('video', videoInput.files[0]);
       res = await api.postFormData('/posts/with-media', formData, state.token);
     } else {
@@ -967,27 +1065,25 @@ document.getElementById('btn-post').onclick = async () => {
       imageInput.value = '';
       audioInput.value = '';
       videoInput.value = '';
-      recordedVoiceBlob = null;
       const preview = document.getElementById('image-preview');
       if (preview) preview.remove();
       const audioHint = document.getElementById('audio-file-hint');
       if (audioHint) audioHint.remove();
       const videoHint = document.getElementById('video-file-hint');
       if (videoHint) videoHint.remove();
-      updateVoiceHint();
       loadPosts();
     } else {
-      alert(res.error || 'Error publishing post');
+      showAlert(res.error || 'Error publishing post');
     }
   } catch (err) {
     console.error('Error:', err);
-    alert('Error publishing post: ' + err.message);
+    showAlert('Error publishing post: ' + err.message);
   }
 };
 
 async function showProfile(userId) {
   const res = await api.get(`/users/${userId}`, state.token);
-  if (!res.id) return alert(t('userNotFound'));
+  if (!res.id) { showAlert(t('userNotFound')); return; }
 
   const page = document.getElementById('profile-page');
   if (!page) return;
@@ -1085,7 +1181,7 @@ async function showProfile(userId) {
   postsWrapper.className = 'profile-posts-wrapper';
 
   const postsTitle = document.createElement('h3');
-  postsTitle.textContent = `${t('post')}s (${res.posts.length})`;
+  postsTitle.textContent = `${t('publishedPosts')} (${res.posts.length})`;
   postsTitle.style.marginTop = '16px';
   postsWrapper.appendChild(postsTitle);
 
@@ -1119,7 +1215,7 @@ function showAvatarUpload() {
   document.getElementById('avatar-cancel').onclick = () => root.remove();
   document.getElementById('avatar-submit').onclick = async () => {
     const fileInput = document.getElementById('avatar-file');
-    if (!fileInput.files || fileInput.files.length === 0) return alert('Please select a file');
+    if (!fileInput.files || fileInput.files.length === 0) { showAlert('Please select a file'); return; }
     const formData = new FormData();
     formData.append('avatar', fileInput.files[0]);
     const res = await api.postFormData('/users/avatar', formData, state.token);
@@ -1129,9 +1225,9 @@ function showAvatarUpload() {
       renderHeaderUserAvatar();
       root.remove();
       loadPosts();
-      alert('Avatar updated');
+      showAlert('Avatar updated');
     } else {
-      alert(res.error || 'Failed to upload avatar');
+      showAlert(res.error || 'Failed to upload avatar');
     }
   };
 }
@@ -1145,14 +1241,14 @@ function showEditProfile() {
   document.getElementById('bio-submit').onclick = async () => {
     const bio = document.getElementById('bio-text').value;
     const trimmed = bio.trim();
-    if (!trimmed) return alert('Bio required');
+    if (!trimmed) { showAlert('Bio required'); return; }
     const res = await api.put('/users/profile', { bio: trimmed }, state.token);
     if (res.id) {
       state.user.bio = res.bio;
       localStorage.setItem('user', JSON.stringify(state.user));
       root.remove();
       loadPosts();
-      alert('Bio updated');
+      showAlert('Bio updated');
     }
   };
 }
@@ -1272,7 +1368,7 @@ async function showNotifications() {
 
 function showCreateSystemNotificationModal() {
   if (!state.token || !state.user || state.user.username !== 'blau3') {
-    alert('Only blau3 can send system notifications');
+    showAlert('Only blau3 can send system notifications');
     return;
   }
   const placeholder = state.lang === 'ru' ? 'Текст системного уведомления' : 'System notification text';
@@ -1289,7 +1385,7 @@ function showCreateSystemNotificationModal() {
     const el = document.getElementById('system-notification-text');
     const content = el.value.trim();
     if (!content) {
-      alert(state.lang === 'ru' ? 'Введите текст уведомления' : 'Enter notification text');
+      showAlert(state.lang === 'ru' ? 'Введите текст уведомления' : 'Enter notification text');
       return;
     }
     try {
@@ -1298,10 +1394,10 @@ function showCreateSystemNotificationModal() {
         root.remove();
         loadNotificationsPage();
       } else {
-        alert(res.error || (state.lang === 'ru' ? 'Не удалось отправить уведомление' : 'Failed to send notification'));
+        showAlert(res.error || (state.lang === 'ru' ? 'Не удалось отправить уведомление' : 'Failed to send notification'));
       }
     } catch (e) {
-      alert(e.message || (state.lang === 'ru' ? 'Не удалось отправить уведомление' : 'Failed to send notification'));
+      showAlert(e.message || (state.lang === 'ru' ? 'Не удалось отправить уведомление' : 'Failed to send notification'));
     }
   };
 }
@@ -1490,7 +1586,7 @@ if (btnSearchUser) {
   btnSearchUser.onclick = () => {
     const raw = userIdSearch.value.trim();
     const id = parseInt(raw, 10);
-    if (!raw || !Number.isInteger(id) || id < 1) return alert(t('userNotFound'));
+    if (!raw || !Number.isInteger(id) || id < 1) { showAlert(t('userNotFound')); return; }
     userIdSearch.value = '';
     showProfile(id);
   };
@@ -1511,6 +1607,135 @@ if (themeBtn) {
     applyTheme(next);
     themeBtn.textContent = next === 'dark' ? '☀️' : '🌙';
   };
+}
+
+const newStoryBtn = document.getElementById('btn-new-story');
+if (newStoryBtn) {
+  newStoryBtn.onclick = () => {
+    if (!state.token) {
+      showAlert(t('loginToPost'));
+      return;
+    }
+    showCreateStoryModal();
+  };
+}
+
+function showCreateStoryModal() {
+  let storyRecorder = null;
+  let storyStream = null;
+  let storyChunks = [];
+  let storyBlob = null;
+
+  const { root } = makeModal(`
+    <h2>${state.lang === 'ru' ? 'Голосовая история' : 'Voice story'}</h2>
+    <p class="muted" style="font-size:13px;margin-top:4px">
+      ${state.lang === 'ru' ? 'Запиши короткое голосовое сообщение' : 'Record a short voice message'}
+    </p>
+    <div style="display:flex;flex-direction:column;align-items:center;margin:12px 0;">
+      <button id="story-record-btn" type="button" class="btn-primary" style="width:64px;height:64px;border-radius:999px;display:flex;align-items:center;justify-content:center;font-size:28px;padding:0">
+        🎤
+      </button>
+      <span id="story-record-status" class="voice-status hidden" style="margin-top:8px"></span>
+    </div>
+    <textarea id="story-text" placeholder="${state.lang === 'ru' ? 'Текст (по желанию)' : 'Text (optional)'}" style="min-height:60px"></textarea>
+    <div class="actions">
+      <button data-role="cancel">${t('cancel')}</button>
+      <button data-role="create" class="btn-primary">${state.lang === 'ru' ? 'Поделиться' : 'Share'}</button>
+    </div>
+  `);
+  const cancelBtn = root.querySelector('button[data-role="cancel"]');
+  const createBtn = root.querySelector('button[data-role="create"]');
+  if (cancelBtn) cancelBtn.onclick = () => root.remove();
+  const recordBtn = document.getElementById('story-record-btn');
+  const statusEl = document.getElementById('story-record-status');
+
+  async function stopRecording() {
+    if (storyRecorder && storyRecorder.state === 'recording') {
+      storyRecorder.stop();
+    }
+  }
+
+  if (recordBtn) {
+    recordBtn.onclick = async () => {
+      if (storyRecorder && storyRecorder.state === 'recording') {
+        await stopRecording();
+        return;
+      }
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        storyStream = stream;
+        storyChunks = [];
+        const mime = MediaRecorder.isTypeSupported('audio/webm;codecs=opus') ? 'audio/webm;codecs=opus' : 'audio/webm';
+        storyRecorder = new MediaRecorder(stream);
+        storyRecorder.ondataavailable = (e) => e.data.size && storyChunks.push(e.data);
+        storyRecorder.onstop = () => {
+          if (storyStream) {
+            storyStream.getTracks().forEach(t => t.stop());
+            storyStream = null;
+          }
+          if (storyChunks.length) {
+            storyBlob = new Blob(storyChunks, { type: mime });
+            if (statusEl) {
+              statusEl.textContent = t('voiceRecorded');
+              statusEl.classList.remove('hidden');
+              statusEl.classList.remove('recording');
+              statusEl.classList.add('recorded');
+            }
+          } else {
+            storyBlob = null;
+            if (statusEl) {
+              statusEl.textContent = '';
+              statusEl.classList.add('hidden');
+              statusEl.classList.remove('recording', 'recorded');
+            }
+          }
+          if (recordBtn) {
+            recordBtn.textContent = '🎤';
+            recordBtn.title = t('recordVoiceTitle');
+          }
+        };
+        storyRecorder.start(200);
+        if (recordBtn) {
+          recordBtn.textContent = '⏹';
+          recordBtn.title = t('stopRecord');
+        }
+        if (statusEl) {
+          statusEl.textContent = t('recording');
+          statusEl.classList.remove('hidden');
+          statusEl.classList.add('recording');
+        }
+      } catch (err) {
+        console.error(err);
+        showAlert(t('noMic'));
+      }
+    };
+  }
+
+  if (createBtn) {
+    createBtn.onclick = async () => {
+      await stopRecording();
+      const textEl = document.getElementById('story-text');
+      const content = textEl ? textEl.value.trim() : '';
+      if (!storyBlob) {
+        showAlert(state.lang === 'ru' ? 'Сначала запиши голос' : 'Record your voice first');
+        return;
+      }
+      try {
+        const fd = new FormData();
+        if (content) fd.append('content', content);
+        if (storyBlob) {
+          const ext = (storyBlob.type || '').includes('ogg') ? 'ogg' : 'webm';
+          fd.append('media', storyBlob, 'story.' + ext);
+        }
+        await api.postFormData('/stories', fd, state.token);
+        root.remove();
+        loadStories();
+      } catch (e) {
+        console.error('Failed to create story', e);
+        showAlert(e.message || 'Failed to create story');
+      }
+    };
+  }
 }
 
 // Settings pop-up menu (gear)
@@ -1579,18 +1804,32 @@ if (categoryEmojiBtn) {
   categoryEmojiBtn.onclick = () => showCategoryEmojiPicker();
 }
 
-// Click on header title scrolls to top
+// Click on header title opens feed and scrolls to top
 const headerTitleRow = document.querySelector('.header-title-row');
 if (headerTitleRow) {
   headerTitleRow.style.cursor = 'pointer';
   headerTitleRow.onclick = () => {
+    switchPage('feed');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
+}
+
+// Floating scroll-to-top arrow
+const scrollTopBtn = document.getElementById('scroll-top-btn');
+if (scrollTopBtn) {
+  scrollTopBtn.onclick = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+  window.addEventListener('scroll', () => {
+    if (window.scrollY > 200) scrollTopBtn.classList.remove('hidden');
+    else scrollTopBtn.classList.add('hidden');
+  });
 }
 
 switchPage('feed');
 renderAuth();
 renderHeaderUserAvatar();
 loadPosts();
+loadStories();
 startAutoRefresh();
 refreshNotificationsIndicator();

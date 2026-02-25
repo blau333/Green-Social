@@ -21,6 +21,7 @@
       </div>
       <div class="header-right">
         <div class="user-search-row">
+          <button id="btn-new-story" type="button" class="icon-btn" title="New story">➕</button>
           <input id="user-id-search" type="number" min="1" placeholder="User ID" aria-label="Search by user ID">
           <button id="btn-search-user" type="button" class="btn-search-user" title="Search user">🔍</button>
         </div>
@@ -49,6 +50,7 @@
 
     <main>
       <section id="feed-page" class="page">
+        <section id="stories-bar" class="card stories-bar hidden"></section>
         <section id="create-post" class="card hidden">
           <textarea id="post-content" placeholder="Hows it going?"></textarea>
           <div class="post-category-row">
@@ -57,13 +59,11 @@
           </div>
           <div style="margin-bottom:8px">
             <input id="post-image" type="file" accept="image/*" style="display:none">
-            <input id="post-audio" type="file" accept="audio/*" style="display:none">
-            <input id="post-video" type="file" accept="video/*" style="display:none">
-            <button id="btn-image" title="Add image" type="button" style="background:transparent;border:1px solid #d1fae5;padding:6px 12px;border-radius:12px;cursor:pointer;margin-right:8px">📷</button>
-            <button id="btn-audio" title="Add audio" type="button" style="background:transparent;border:1px solid #d1fae5;padding:6px 12px;border-radius:12px;cursor:pointer;margin-right:8px">🎵</button>
-            <button id="btn-video" title="Add video" type="button" style="background:transparent;border:1px solid #d1fae5;padding:6px 12px;border-radius:12px;cursor:pointer;margin-right:8px">🎬</button>
-            <button id="btn-voice-record" title="Record voice" type="button" style="background:transparent;border:1px solid #d1fae5;padding:6px 12px;border-radius:12px;cursor:pointer;margin-right:8px">🎤</button>
-            <span id="voice-record-status" class="voice-status hidden"></span>
+          <input id="post-audio" type="file" accept="audio/*" style="display:none">
+          <input id="post-video" type="file" accept="video/*" style="display:none">
+          <button id="btn-image" title="Add image" type="button" style="background:transparent;border:1px solid #d1fae5;padding:6px 12px;border-radius:12px;cursor:pointer;margin-right:8px">📷</button>
+          <button id="btn-audio" title="Add audio" type="button" style="background:transparent;border:1px solid #d1fae5;padding:6px 12px;border-radius:12px;cursor:pointer;margin-right:8px">🎵</button>
+          <button id="btn-video" title="Add video" type="button" style="background:transparent;border:1px solid #d1fae5;padding:6px 12px;border-radius:12px;cursor:pointer;margin-right:8px">🎬</button>
             <button id="btn-post">⬆️</button>
           </div>
         </section>
@@ -88,6 +88,7 @@
       <button id="tab-subscriptions" class="tab-btn">👥</button>
       <button id="tab-notifications" class="tab-btn">🔔</button>
     </nav>
+    <button id="scroll-top-btn" class="scroll-top-btn hidden" type="button" title="Back to top">⬆️</button>
     <footer>
       <p>Created by blau3 and Komi</p>
       <a href="https://t.me/blau030" target="_blank">

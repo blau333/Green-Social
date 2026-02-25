@@ -78,6 +78,28 @@ const uploadLogo = multer({
   }
 }).single('logo');
 
+const storyMediaStorage = multer.diskStorage({
+  destination: async (req, file, cb) => {
+    await fs.mkdir(uploadDir, { recursive: true });
+    cb(null, uploadDir);
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, 'story-' + uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
+const uploadStoryMedia = multer({
+  storage: storyMediaStorage,
+  limits: { fileSize: 20 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    if (!file.mimetype.startsWith('audio/')) {
+      return cb(new Error('Only audio allowed for stories'));
+    }
+    cb(null, true);
+  }
+}).single('media');
+
 async function initDb() {
   const db = await open({ filename: path.join(__dirname, 'data.db'), driver: sqlite3.Database });
   await db.exec(`
@@ -149,6 +171,15 @@ async function initDb() {
       created_at INTEGER,
       FOREIGN KEY(from_user_id) REFERENCES users(id),
       FOREIGN KEY(to_user_id) REFERENCES users(id)
+    );
+    CREATE TABLE IF NOT EXISTS stories (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER,
+      content TEXT,
+      media TEXT,
+      created_at INTEGER,
+      expires_at INTEGER,
+      FOREIGN KEY(user_id) REFERENCES users(id)
     );
   `);
   try {
@@ -713,6 +744,63 @@ function authMiddleware(req, res, next) {
     const fromUserId = parseInt(req.params.userId);
     await db.run('UPDATE messages SET is_read = 1 WHERE from_user_id = ? AND to_user_id = ?', fromUserId, req.user.id);
     res.json({ success: true });
+  });
+
+  // Stories: create and list
+  app.post('/api/stories', authMiddleware, (req, res) => {
+    uploadStoryMedia(req, res, async (err) => {
+      if (err) {
+        return res.status(400).json({ error: err.message });
+      }
+      try {
+        const { content } = req.body || {};
+        const file = req.file;
+        if ((!content || !content.trim()) && !file) {
+          return res.status(400).json({ error: 'content or media required' });
+        }
+        const created_at = Date.now();
+        const expires_at = created_at + 24 * 60 * 60 * 1000; // 24h
+        const mediaUrl = file ? '/uploads/' + file.filename : null;
+        await db.run(
+          'INSERT INTO stories (user_id, content, media, created_at, expires_at) VALUES (?, ?, ?, ?, ?)',
+          req.user.id,
+          content ? content.trim() : '',
+          mediaUrl,
+          created_at,
+          expires_at
+        );
+        res.json({ success: true });
+      } catch (e) {
+        console.error('Error in POST /api/stories:', e);
+        res.status(500).json({ error: e.message });
+      }
+    });
+  });
+
+  app.get('/api/stories', authMiddleware, async (req, res) => {
+    try {
+      const now = Date.now();
+      const userId = req.user.id;
+      const rows = await db.all(
+        `
+        SELECT s.id, s.content, s.media, s.created_at,
+               u.id as user_id, u.username, u.avatar
+        FROM stories s
+        JOIN users u ON u.id = s.user_id
+        WHERE s.expires_at > ?
+          AND (s.user_id = ?
+               OR s.user_id IN (SELECT subscribed_to_id FROM subscriptions WHERE subscriber_id = ?))
+        ORDER BY s.created_at DESC
+        `,
+        now,
+        userId,
+        userId
+      );
+      res.json(rows);
+    } catch (e) {
+      console.error('Error in GET /api/stories:', e);
+      res.status(500).json({ error: e.message });
+    }
   });
 
   app.get('/api/settings/logo', async (req, res) => {
