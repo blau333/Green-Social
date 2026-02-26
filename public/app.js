@@ -49,7 +49,31 @@ const i18n = {
     resetSuccess: 'Password has been reset. Use the new password to login.',
     invalidRecovery: 'Invalid username or recovery code',
     missingFields: 'Please fill in all fields',
-    newRecoveryCodeInfo: 'Your new recovery code:'
+    newRecoveryCodeInfo: 'Your new recovery code:',
+    editPost: 'Edit post',
+    saveChanges: 'Save changes',
+    contentRequired: 'Please write something',
+    addPoll: 'Add poll',
+    pollQuestionPlaceholder: 'Poll question',
+    pollOptionPlaceholder: 'Option',
+    addPollOption: 'Add option',
+    totalVotes: 'Total votes',
+    loginToVote: 'Login to vote in polls',
+    languageLabel: 'Language',
+    themeLabel: 'Theme',
+    newStory: 'New story',
+    toggleTheme: 'Toggle theme',
+    addImage: 'Add image',
+    addAudio: 'Add audio',
+    addVideo: 'Add video',
+    categoryTextPlaceholder: 'Category text (optional)',
+    editorBold: 'Bold',
+    editorItalic: 'Italic',
+    editorUnderline: 'Underline',
+    editorList: 'Bullet list',
+    editorQuote: 'Quote',
+    editorClear: 'Clear formatting',
+    editorListLabel: 'List'
   },
   ru: {
     login: 'Вход', register: 'Регистрация', logout: 'Выход', hi: 'Йоу,', welcome: 'Добро пожаловать', postPlaceholder: 'Что нового?', post: 'Опубликовать', publishedPosts: 'Опубликованные посты', comments: 'Комментарии', writeComment: 'Написать комментарий', send: 'Отправить', create: 'Создать', cancel: 'Отмена', loginFailed: 'Ошибка входа', regFailed: 'Ошибка регистрации', loginTitle: 'Вход', registerTitle: 'Создать аккаунт', reactLike: 'Нравится', reactLove: 'Люблю', reactFunny: 'Смешно', loginToReact: 'Войдите чтобы реагировать', loginToComment: 'Войдите чтобы комментировать', loginToPost: 'Войдите чтобы публиковать', subscribe: 'Подписаться', unsubscribe: 'Отписаться', subscribers: 'Подписчики', editProfile: 'Редактировать профиль', notifications: 'Уведомления', noNotifications: 'Нет уведомлений', markAllAsRead: 'Отметить все как прочитанные', subscribedYou: 'подписался на вас', postedNew: 'опубликовал новый пост', feed: 'Лента', subscriptions: 'Подписки', messages: 'Сообщения', noMessages: 'Нет сообщений', typeMessage: 'Напишите сообщение...', sendMessage: 'Написать сообщение',
@@ -92,7 +116,31 @@ const i18n = {
     resetSuccess: 'Пароль сброшен. Используйте новый пароль для входа.',
     invalidRecovery: 'Неверный логин или код восстановления',
     missingFields: 'Заполните все поля',
-    newRecoveryCodeInfo: 'Ваш новый код восстановления:'
+    newRecoveryCodeInfo: 'Ваш новый код восстановления:',
+    editPost: 'Редактировать пост',
+    saveChanges: 'Сохранить',
+    contentRequired: 'Нужно что-то написать',
+    addPoll: 'Добавить опрос',
+    pollQuestionPlaceholder: 'Вопрос опроса',
+    pollOptionPlaceholder: 'Вариант',
+    addPollOption: 'Добавить вариант',
+    totalVotes: 'Всего голосов',
+    loginToVote: 'Войдите, чтобы голосовать в опросах',
+    languageLabel: 'Язык',
+    themeLabel: 'Тема',
+    newStory: 'Новая история',
+    toggleTheme: 'Сменить тему',
+    addImage: 'Добавить изображение',
+    addAudio: 'Добавить аудио',
+    addVideo: 'Добавить видео',
+    categoryTextPlaceholder: 'Текст категории (необязательно)',
+    editorBold: 'Жирный',
+    editorItalic: 'Курсив',
+    editorUnderline: 'Подчёркивание',
+    editorList: 'Список',
+    editorQuote: 'Цитата',
+    editorClear: 'Очистить форматирование',
+    editorListLabel: 'Список'
   }
 };
 
@@ -265,6 +313,71 @@ function clearAuth(){ state.token = null; state.user = null; localStorage.remove
 
 function t(k){ return i18n[state.lang][k] || k }
 
+function applyUiText() {
+  const newStoryBtn = document.getElementById('btn-new-story');
+  if (newStoryBtn) newStoryBtn.title = t('newStory');
+
+  const settingsLanguageLabel = document.getElementById('settings-language-label');
+  if (settingsLanguageLabel) settingsLanguageLabel.textContent = t('languageLabel');
+
+  const settingsThemeLabel = document.getElementById('settings-theme-label');
+  if (settingsThemeLabel) settingsThemeLabel.textContent = t('themeLabel');
+
+  const themeBtn = document.getElementById('theme-toggle');
+  if (themeBtn) themeBtn.title = t('toggleTheme');
+
+  const postEditor = document.getElementById('post-editor');
+  if (postEditor && postEditor.dataset) postEditor.dataset.placeholder = t('postPlaceholder');
+
+  const postCategoryText = document.getElementById('post-category-text');
+  if (postCategoryText) postCategoryText.placeholder = t('categoryTextPlaceholder');
+
+  const btnImage = document.getElementById('btn-image');
+  if (btnImage) btnImage.title = t('addImage');
+  const btnAudio = document.getElementById('btn-audio');
+  if (btnAudio) btnAudio.title = t('addAudio');
+  const btnVideo = document.getElementById('btn-video');
+  if (btnVideo) btnVideo.title = t('addVideo');
+
+  const pollToggleBtn = document.getElementById('poll-toggle-btn');
+  const pollFields = document.getElementById('poll-fields');
+  if (pollToggleBtn && pollFields) {
+    const isHidden = pollFields.classList.contains('hidden');
+    pollToggleBtn.textContent = (isHidden ? '+ ' : '× ') + t('addPoll');
+  }
+
+  const pollQuestionInput = document.getElementById('poll-question');
+  if (pollQuestionInput) pollQuestionInput.placeholder = t('pollQuestionPlaceholder');
+
+  const pollOptionsContainer = document.getElementById('poll-options');
+  if (pollOptionsContainer) {
+    const optionInputs = pollOptionsContainer.querySelectorAll('.poll-option-input');
+    optionInputs.forEach((inp, idx) => {
+      const n = idx + 1;
+      inp.placeholder = n <= 2 ? `${t('pollOptionPlaceholder')} ${n}` : t('pollOptionPlaceholder');
+    });
+  }
+
+  const addPollOptionBtn = document.getElementById('add-poll-option');
+  if (addPollOptionBtn) addPollOptionBtn.textContent = '+ ' + t('addPollOption');
+
+  // Editor toolbars (create + modals)
+  document.querySelectorAll('.editor-toolbar').forEach(toolbar => {
+    toolbar.querySelectorAll('.editor-btn').forEach(btn => {
+      const cmd = btn.dataset.cmd;
+      if (cmd === 'bold') btn.title = t('editorBold');
+      else if (cmd === 'italic') btn.title = t('editorItalic');
+      else if (cmd === 'underline') btn.title = t('editorUnderline');
+      else if (cmd === 'insertUnorderedList') {
+        btn.title = t('editorList');
+        btn.textContent = '• ' + t('editorListLabel');
+      }
+      else if (cmd === 'formatBlock') btn.title = t('editorQuote');
+      else if (cmd === 'removeFormat') btn.title = t('editorClear');
+    });
+  });
+}
+
 function formatUsername(name) {
   return name === 'blau3' ? name + ' 🔧' : name;
 }
@@ -281,6 +394,20 @@ function renderAuth(){
   } else {
     const cp = document.getElementById('create-post'); if (cp) cp.classList.remove('hidden');
     ensureCurrentUserAvatar();
+  }
+  const logoutBtn = document.getElementById('logout-btn');
+  if (logoutBtn) {
+    if (state.user) {
+      logoutBtn.classList.remove('hidden');
+      logoutBtn.textContent = t('logout');
+      logoutBtn.onclick = () => {
+        clearAuth();
+        closeSettingsMenu();
+      };
+    } else {
+      logoutBtn.classList.add('hidden');
+      logoutBtn.onclick = null;
+    }
   }
   const welcomeEl = document.getElementById('welcome'); if (welcomeEl) welcomeEl.textContent = t('welcome');
   renderHeaderUserAvatar();
@@ -353,7 +480,7 @@ function showAlert(message, opts){
     <h2>${title}</h2>
     <p>${message}</p>
     <div class="actions">
-      <button data-role="ok">${okLabel}</button>
+      <button data-role="ok" class="btn-primary">${okLabel}</button>
     </div>
   `);
   const okBtn = root.querySelector('button[data-role="ok"]');
@@ -744,9 +871,16 @@ function renderPostsInto(posts, containerId) {
 
     const content = document.createElement('div');
     content.className = 'content';
-    content.textContent = p.content;
+    content.innerHTML = p.content;
 
     if (state.user && state.user.id === p.user_id) {
+      const editBtn = document.createElement('button');
+      editBtn.textContent = t('editPost');
+      editBtn.className = 'edit-btn';
+      editBtn.title = t('editPost');
+      editBtn.onclick = () => showEditPostModal(p);
+      card.appendChild(editBtn);
+
       const deleteBtn = document.createElement('button');
       deleteBtn.textContent = t('DeletePost');
       deleteBtn.className = 'delete-btn';
@@ -795,6 +929,82 @@ function renderPostsInto(posts, containerId) {
       video.style.borderRadius = '12px';
       imageDiv.appendChild(video);
     }
+    if (p.poll && p.poll.id) {
+      const pollWrapper = document.createElement('div');
+      pollWrapper.className = 'post-poll';
+
+      const q = document.createElement('div');
+      q.className = 'post-poll-question';
+      q.textContent = p.poll.question;
+      pollWrapper.appendChild(q);
+
+      const optionsContainer = document.createElement('div');
+      optionsContainer.className = 'post-poll-options';
+
+      const totalVotes = p.poll.totalVotes || 0;
+
+      (p.poll.options || []).forEach(opt => {
+        const optionBtn = document.createElement('button');
+        optionBtn.type = 'button';
+        optionBtn.className = 'post-poll-option';
+        if (p.poll.userVoteOptionId && p.poll.userVoteOptionId === opt.id) {
+          optionBtn.classList.add('voted');
+        }
+
+        const bar = document.createElement('div');
+        bar.className = 'post-poll-bar';
+        const fill = document.createElement('div');
+        fill.className = 'post-poll-bar-fill';
+        let percent = 0;
+        if (totalVotes > 0) {
+          percent = Math.round((opt.votes || 0) * 100 / totalVotes);
+        }
+        const minVisible = totalVotes > 0 && opt.votes > 0 ? 8 : 0;
+        fill.style.width = Math.max(percent, minVisible) + '%';
+        bar.appendChild(fill);
+
+        const label = document.createElement('span');
+        label.className = 'post-poll-option-label';
+        label.textContent = opt.text;
+
+        const meta = document.createElement('span');
+        meta.className = 'post-poll-option-meta';
+        if (totalVotes > 0) {
+          meta.textContent = `${percent}% · ${opt.votes || 0}`;
+        } else {
+          meta.textContent = '0% · 0';
+        }
+
+        optionBtn.appendChild(bar);
+        optionBtn.appendChild(label);
+        optionBtn.appendChild(meta);
+
+        optionBtn.onclick = async () => {
+          if (!state.token) {
+            showAlert(t('loginToVote'));
+            return;
+          }
+          try {
+            await api.post(`/polls/${p.poll.id}/vote`, { optionId: opt.id }, state.token);
+            refreshCurrentFeed();
+          } catch (e) {
+            console.error('Failed to vote in poll', e);
+          }
+        };
+
+        optionsContainer.appendChild(optionBtn);
+      });
+
+      pollWrapper.appendChild(optionsContainer);
+
+      const footer = document.createElement('div');
+      footer.className = 'post-poll-footer';
+      footer.textContent = `${t('totalVotes')}: ${p.poll.totalVotes || 0}`;
+      pollWrapper.appendChild(footer);
+
+      card.appendChild(pollWrapper);
+    }
+
     const reactionsDiv = document.createElement('div'); reactionsDiv.className = 'reactions';
     const types = ['like', 'love', 'funny', 'poop', 'clown'];
     types.forEach(typeKey => {
@@ -827,6 +1037,71 @@ async function loadPosts() {
   allFeedPosts = Array.isArray(posts) ? posts : [];
   renderCategoryBar(allFeedPosts);
   renderPostsInto(getFilteredFeedPosts(), 'posts');
+}
+
+function showEditPostModal(post) {
+  const editorId = `edit-post-editor-${post.id}`;
+  const { root } = makeModal(`
+    <h2>${t('editPost')}</h2>
+    <div class="rich-editor">
+      <div class="editor-toolbar">
+        <button type="button" class="editor-btn" data-cmd="bold" title="Bold"><b>B</b></button>
+        <button type="button" class="editor-btn" data-cmd="italic" title="Italic"><i>I</i></button>
+        <button type="button" class="editor-btn" data-cmd="underline" title="Underline"><u>U</u></button>
+        <button type="button" class="editor-btn" data-cmd="insertUnorderedList" title="Bullet list">• List</button>
+        <button type="button" class="editor-btn" data-cmd="formatBlock" data-value="blockquote" title="Quote">❝ ❞</button>
+        <button type="button" class="editor-btn" data-cmd="removeFormat" title="Clear formatting">✖</button>
+      </div>
+      <div id="${editorId}" class="editor-area" contenteditable="true">${post.content || ''}</div>
+    </div>
+    <div class="actions">
+      <button data-role="cancel">${t('cancel')}</button>
+      <button data-role="save" class="btn-primary">${t('saveChanges')}</button>
+    </div>
+  `);
+  const cancelBtn = root.querySelector('button[data-role="cancel"]');
+  const saveBtn = root.querySelector('button[data-role="save"]');
+  const editorEl = root.querySelector('#' + editorId);
+  const toolbar = root.querySelector('.editor-toolbar');
+
+  if (toolbar && editorEl) {
+    toolbar.querySelectorAll('.editor-btn').forEach(btn => {
+      btn.onclick = () => {
+        const cmd = btn.dataset.cmd;
+        const value = btn.dataset.value || null;
+        if (!cmd) return;
+        editorEl.focus();
+        try {
+          document.execCommand(cmd, false, value);
+        } catch (e) {
+          console.error('execCommand failed', e);
+        }
+      };
+    });
+  }
+
+  if (cancelBtn) cancelBtn.onclick = () => root.remove();
+  if (saveBtn) {
+    saveBtn.onclick = async () => {
+      const newContent = (editorEl && editorEl.innerHTML ? editorEl.innerHTML.trim() : '');
+      if (!newContent) {
+        showAlert(t('contentRequired'));
+        return;
+      }
+      try {
+        const updated = await api.put(`/posts/${post.id}`, { content: newContent }, state.token);
+        if (updated && updated.id) {
+          root.remove();
+          refreshCurrentFeed();
+        } else {
+          showAlert(updated && updated.error ? updated.error : 'Failed to update post');
+        }
+      } catch (err) {
+        console.error('Failed to update post', err);
+        showAlert('Failed to update post: ' + err.message);
+      }
+    };
+  }
 }
 
 async function showPostModal(postId) {
@@ -988,7 +1263,10 @@ document.getElementById('post-image').onchange = (e) => {
       img.style.maxWidth = '100%';
       img.style.borderRadius = '12px';
       img.style.marginBottom = '8px';
-      document.getElementById('post-content').parentElement.insertBefore(img, document.getElementById('post-content').nextElementSibling);
+      const mediaToolbar = document.querySelector('.post-media-toolbar');
+      if (mediaToolbar && mediaToolbar.parentElement) {
+        mediaToolbar.parentElement.insertBefore(img, mediaToolbar);
+      }
     };
     reader.readAsDataURL(file);
   }
@@ -1006,7 +1284,10 @@ document.getElementById('post-audio').onchange = (e) => {
     hint.style.color = 'var(--muted)';
     hint.style.marginTop = '4px';
     hint.textContent = '🎵 ' + file.name;
-    document.getElementById('post-content').parentElement.insertBefore(hint, document.getElementById('post-content').nextElementSibling);
+    const mediaToolbar = document.querySelector('.post-media-toolbar');
+    if (mediaToolbar && mediaToolbar.parentElement) {
+      mediaToolbar.parentElement.insertBefore(hint, mediaToolbar);
+    }
   }
 };
 
@@ -1022,18 +1303,35 @@ document.getElementById('post-video').onchange = (e) => {
     hint.style.color = 'var(--muted)';
     hint.style.marginTop = '4px';
     hint.textContent = '🎬 ' + file.name;
-    document.getElementById('post-content').parentElement.insertBefore(hint, document.getElementById('post-content').nextElementSibling);
+    const mediaToolbar = document.querySelector('.post-media-toolbar');
+    if (mediaToolbar && mediaToolbar.parentElement) {
+      mediaToolbar.parentElement.insertBefore(hint, mediaToolbar);
+    }
   }
 };
 
 document.getElementById('btn-post').onclick = async () => {
   if (!state.token) { showAlert(t('loginToPost')); return; }
-  const content = document.getElementById('post-content').value;
+  const editor = document.getElementById('post-editor');
+  const content = editor ? editor.innerHTML.trim() : '';
   const categoryTextInput = document.getElementById('post-category-text');
   const emojiBtn = document.getElementById('post-category-emoji');
   const categoryEmoji = (emojiBtn && emojiBtn.dataset && emojiBtn.dataset.emoji) ? emojiBtn.dataset.emoji.trim() : '';
   const categoryText = categoryTextInput ? categoryTextInput.value.trim() : '';
   const category = [categoryEmoji, categoryText].filter(Boolean).join(' ').trim();
+  const pollQuestionInput = document.getElementById('poll-question');
+  const pollOptionsContainer = document.getElementById('poll-options');
+  let poll = null;
+  if (pollQuestionInput && pollOptionsContainer && !pollOptionsContainer.classList.contains('hidden')) {
+    const question = pollQuestionInput.value.trim();
+    const optionInputs = Array.from(pollOptionsContainer.querySelectorAll('.poll-option-input'));
+    const options = optionInputs
+      .map((inp) => inp.value.trim())
+      .filter((v) => v.length > 0);
+    if (question && options.length >= 2) {
+      poll = { question, options };
+    }
+  }
   const imageInput = document.getElementById('post-image');
   const audioInput = document.getElementById('post-audio');
   const videoInput = document.getElementById('post-video');
@@ -1048,6 +1346,7 @@ document.getElementById('btn-post').onclick = async () => {
       const formData = new FormData();
       formData.append('content', content);
       if (category) formData.append('category', category);
+      if (poll) formData.append('poll', JSON.stringify(poll));
       if (hasImage) formData.append('image', imageInput.files[0]);
       if (audioInput.files.length) formData.append('audio', audioInput.files[0]);
       if (hasVideo) formData.append('video', videoInput.files[0]);
@@ -1055,13 +1354,20 @@ document.getElementById('btn-post').onclick = async () => {
     } else {
       const body = { content };
       if (category) body.category = category;
+      if (poll) body.poll = poll;
       res = await api.post('/posts', body, state.token);
     }
     
     if (res.id) {
-      document.getElementById('post-content').value = '';
+      if (editor) editor.innerHTML = '';
       if (categoryTextInput) categoryTextInput.value = '';
       if (emojiBtn) { delete emojiBtn.dataset.emoji; emojiBtn.textContent = '😊'; }
+      if (pollQuestionInput) pollQuestionInput.value = '';
+      if (pollOptionsContainer) {
+        const optionInputs = pollOptionsContainer.querySelectorAll('.poll-option-input');
+        optionInputs.forEach((inp) => { inp.value = ''; });
+      }
+      applyUiText();
       imageInput.value = '';
       audioInput.value = '';
       videoInput.value = '';
@@ -1161,14 +1467,6 @@ async function showProfile(userId) {
     editBtn.textContent = t('editProfile');
     editBtn.onclick = showEditProfile;
     actionsRow.appendChild(editBtn);
-
-    const logoutBtn = document.createElement('button');
-    logoutBtn.textContent = t('logout');
-    logoutBtn.onclick = () => {
-      clearAuth();
-      switchPage('feed');
-    };
-    actionsRow.appendChild(logoutBtn);
   }
 
   headerCard.appendChild(topRow);
@@ -1571,10 +1869,7 @@ if (langSelect) {
     localStorage.setItem('lang', state.lang);
     renderAuth();
     loadPosts();
-    const uidSearch = document.getElementById('user-id-search');
-    if (uidSearch) uidSearch.placeholder = t('userIdPlaceholder');
-    const btnSearch = document.getElementById('btn-search-user');
-    if (btnSearch) btnSearch.title = t('searchUserById');
+    applyUiText();
   };
 }
 
@@ -1606,6 +1901,71 @@ if (themeBtn) {
     const next = (localStorage.getItem('theme') === 'dark') ? 'light' : 'dark';
     applyTheme(next);
     themeBtn.textContent = next === 'dark' ? '☀️' : '🌙';
+  };
+}
+
+// Rich text editor toolbar for create-post
+const postEditor = document.getElementById('post-editor');
+const editorToolbar = document.querySelector('#create-post .editor-toolbar');
+if (postEditor && editorToolbar) {
+  editorToolbar.querySelectorAll('.editor-btn').forEach(btn => {
+    btn.onclick = () => {
+      const cmd = btn.dataset.cmd;
+      const value = btn.dataset.value || null;
+      if (!cmd) return;
+      postEditor.focus();
+      try {
+        document.execCommand(cmd, false, value);
+      } catch (e) {
+        console.error('execCommand failed', e);
+      }
+    };
+  });
+}
+
+// Poll builder wiring
+const pollToggleBtn = document.getElementById('poll-toggle-btn');
+const pollFields = document.getElementById('poll-fields');
+const pollQuestionInput = document.getElementById('poll-question');
+const pollOptionsContainer = document.getElementById('poll-options');
+const addPollOptionBtn = document.getElementById('add-poll-option');
+
+if (pollToggleBtn && pollFields) {
+  pollToggleBtn.textContent = '+ ' + t('addPoll');
+  pollToggleBtn.onclick = () => {
+    const isHidden = pollFields.classList.contains('hidden');
+    if (isHidden) {
+      pollFields.classList.remove('hidden');
+      pollToggleBtn.textContent = '× ' + t('addPoll');
+    } else {
+      pollFields.classList.add('hidden');
+      pollToggleBtn.textContent = '+ ' + t('addPoll');
+    }
+  };
+}
+
+if (pollQuestionInput) {
+  pollQuestionInput.placeholder = t('pollQuestionPlaceholder');
+}
+
+if (pollOptionsContainer) {
+  applyUiText();
+}
+
+if (addPollOptionBtn && pollOptionsContainer) {
+  addPollOptionBtn.textContent = '+ ' + t('addPollOption');
+  addPollOptionBtn.onclick = () => {
+    const current = pollOptionsContainer.querySelectorAll('.poll-option-input').length;
+    if (current >= 6) return;
+    const row = document.createElement('div');
+    row.className = 'poll-option-row';
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'poll-option-input';
+    input.placeholder = t('pollOptionPlaceholder');
+    row.appendChild(input);
+    pollOptionsContainer.appendChild(row);
+    input.focus();
   };
 }
 
@@ -1829,6 +2189,7 @@ if (scrollTopBtn) {
 switchPage('feed');
 renderAuth();
 renderHeaderUserAvatar();
+applyUiText();
 loadPosts();
 loadStories();
 startAutoRefresh();
