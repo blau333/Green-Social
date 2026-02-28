@@ -31,16 +31,20 @@
             <button id="settings-btn" type="button" class="icon-btn" aria-label="Settings" aria-haspopup="menu" aria-expanded="false" title="Settings">⚙️</button>
             <div id="settings-menu" class="settings-menu hidden" role="menu" aria-label="Settings menu">
               <div class="settings-row">
-                <span class="settings-label">Language</span>
+                <span id="settings-language-label" class="settings-label">Language</span>
                 <select id="lang-select" aria-label="language-select">
-                  <option value="ru">Рус</option>
-                  <option value="en">Eng</option>
+                  <option value="ru">Рус🪆</option>
+                  <option value="en">Eng💂‍♂️</option>
                 </select>
               </div>
               <div class="settings-row">
-                <span class="settings-label">Theme</span>
+                <span id="settings-theme-label" class="settings-label">Theme</span>
                 <button id="theme-toggle" type="button" title="Toggle theme">Dark</button>
               </div>
+              <div class="settings-divider" aria-hidden="true"></div>
+              <button id="logout-btn" type="button" class="settings-logout-btn btn-primary hidden">
+                Logout
+              </button>
             </div>
           </div>
         </div>
@@ -52,7 +56,17 @@
       <section id="feed-page" class="page">
         <section id="stories-bar" class="card stories-bar hidden"></section>
         <section id="create-post" class="card hidden">
-          <textarea id="post-content" placeholder="Hows it going?"></textarea>
+          <div class="rich-editor">
+            <div class="editor-toolbar">
+              <button type="button" class="editor-btn" data-cmd="bold" title="Bold"><b>B</b></button>
+              <button type="button" class="editor-btn" data-cmd="italic" title="Italic"><i>I</i></button>
+              <button type="button" class="editor-btn" data-cmd="underline" title="Underline"><u>U</u></button>
+              <button type="button" class="editor-btn" data-cmd="insertUnorderedList" title="Bullet list">• List</button>
+              <button type="button" class="editor-btn" data-cmd="formatBlock" data-value="blockquote" title="Quote">❝ ❞</button>
+              <button type="button" class="editor-btn" data-cmd="removeFormat" title="Clear formatting">✖</button>
+            </div>
+            <div id="post-editor" class="editor-area" contenteditable="true" data-placeholder="Hows it going?"></div>
+          </div>
           <div class="post-category-row">
             <button id="post-category-emoji" type="button" class="emoji-picker-btn" title="Выбрать эмодзи категории">😊</button>
             <input id="post-category-text" class="post-category-input" placeholder="Category text (optional)">
