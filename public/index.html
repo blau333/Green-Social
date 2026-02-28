@@ -57,21 +57,37 @@
             <button id="post-category-emoji" type="button" class="emoji-picker-btn" title="Выбрать эмодзи категории">😊</button>
             <input id="post-category-text" class="post-category-input" placeholder="Category text (optional)">
           </div>
+          <div id="poll-fields" class="poll-create-fields poll-block" style="display:none;">
+            <div class="poll-question">📊 Создать опрос</div>
+            <input id="poll-question" type="text" placeholder="Вопрос для опроса" class="poll-create-input">
+            <div id="poll-options">
+              <input type="text" class="poll-option-input poll-create-input" placeholder="Вариант 1">
+              <input type="text" class="poll-option-input poll-create-input" placeholder="Вариант 2">
+            </div>
+            <button id="add-poll-option" type="button" class="poll-add-btn">+ Добавить вариант</button>
+          </div>
           <div style="margin-bottom:8px">
             <input id="post-image" type="file" accept="image/*" style="display:none">
-          <input id="post-audio" type="file" accept="audio/*" style="display:none">
-          <input id="post-video" type="file" accept="video/*" style="display:none">
-          <button id="btn-image" title="Add image" type="button" style="background:transparent;border:1px solid #d1fae5;padding:6px 12px;border-radius:12px;cursor:pointer;margin-right:8px">📷</button>
-          <button id="btn-audio" title="Add audio" type="button" style="background:transparent;border:1px solid #d1fae5;padding:6px 12px;border-radius:12px;cursor:pointer;margin-right:8px">🎵</button>
-          <button id="btn-video" title="Add video" type="button" style="background:transparent;border:1px solid #d1fae5;padding:6px 12px;border-radius:12px;cursor:pointer;margin-right:8px">🎬</button>
+            <input id="post-audio" type="file" accept="audio/*" style="display:none">
+            <input id="post-video" type="file" accept="video/*" style="display:none">
+            <button id="btn-image" title="Add image" type="button" class="media-btn">📷</button>
+            <button id="btn-audio" title="Add audio" type="button" class="media-btn">🎵</button>
+            <button id="btn-video" title="Add video" type="button" class="media-btn">🎬</button>
+            <button id="btn-polls" title="Создать опрос" type="button" class="media-btn">📊</button>
             <button id="btn-post">⬆️</button>
           </div>
+        </section>
+
+        <section id="recommended-wrapper" class="card hidden">
+          <h3 id="recommended-title"></h3>
+          <section id="recommended-posts"></section>
         </section>
 
         <section id="posts"></section>
       </section>
 
       <section id="subscriptions-page" class="page hidden">
+        <section id="subscriptions-users" class="card"></section>
         <section id="subscriptions-posts"></section>
       </section>
 
@@ -82,11 +98,16 @@
       <section id="profile-page" class="page hidden">
         <!-- Заполняется динамически в showProfile в app.js -->
       </section>
+
+      <section id="messages-page" class="page hidden">
+        <div id="messages-container"></div>
+      </section>
     </main>
     <nav class="tabs tabs-bottom">
       <button id="tab-feed" class="tab-btn active">📰</button>
       <button id="tab-subscriptions" class="tab-btn">👥</button>
       <button id="tab-notifications" class="tab-btn">🔔</button>
+      <button id="tab-messages" class="tab-btn">💬</button>
     </nav>
     <button id="scroll-top-btn" class="scroll-top-btn hidden" type="button" title="Back to top">⬆️</button>
     <footer>

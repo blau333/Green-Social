@@ -140,6 +140,15 @@ async function initDb() {
       FOREIGN KEY(post_id) REFERENCES posts(id),
       FOREIGN KEY(user_id) REFERENCES users(id)
     );
+    CREATE TABLE IF NOT EXISTS comment_likes (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      comment_id INTEGER,
+      user_id INTEGER,
+      created_at INTEGER,
+      UNIQUE(comment_id, user_id),
+      FOREIGN KEY(comment_id) REFERENCES comments(id),
+      FOREIGN KEY(user_id) REFERENCES users(id)
+    );
     CREATE TABLE IF NOT EXISTS subscriptions (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       subscriber_id INTEGER,
@@ -181,6 +190,30 @@ async function initDb() {
       expires_at INTEGER,
       FOREIGN KEY(user_id) REFERENCES users(id)
     );
+    CREATE TABLE IF NOT EXISTS polls (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      post_id INTEGER UNIQUE,
+      question TEXT NOT NULL,
+      created_at INTEGER,
+      FOREIGN KEY(post_id) REFERENCES posts(id)
+    );
+    CREATE TABLE IF NOT EXISTS poll_options (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      poll_id INTEGER,
+      text TEXT NOT NULL,
+      sort_order INTEGER DEFAULT 0,
+      FOREIGN KEY(poll_id) REFERENCES polls(id)
+    );
+    CREATE TABLE IF NOT EXISTS poll_votes (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      poll_id INTEGER,
+      option_id INTEGER,
+      user_id INTEGER,
+      UNIQUE(poll_id, user_id),
+      FOREIGN KEY(poll_id) REFERENCES polls(id),
+      FOREIGN KEY(option_id) REFERENCES poll_options(id),
+      FOREIGN KEY(user_id) REFERENCES users(id)
+    );
   `);
   try {
     await db.run('ALTER TABLE posts ADD COLUMN audio TEXT DEFAULT NULL');
@@ -196,6 +229,9 @@ async function initDb() {
   } catch (e) { /* ignore */ }
   try {
     await db.run('ALTER TABLE users ADD COLUMN recovery_token TEXT');
+  } catch (e) { /* column may already exist */ }
+  try {
+    await db.run('ALTER TABLE poll_options ADD COLUMN sort_order INTEGER DEFAULT 0');
   } catch (e) { /* column may already exist */ }
   return db;
 }
@@ -326,12 +362,14 @@ function authMiddleware(req, res, next) {
         userReactions = await db.all('SELECT type FROM reactions WHERE post_id = ? AND user_id = ?', p.id, userId);
       }
       const isSubscribedToAuthor = userId ? subscribedIds.includes(p.user_id) : false;
+      const poll = await getPollForPost(p.id, userId);
       results.push({
         ...p,
         reactions: reactions.reduce((acc, r) => ({ ...acc, [r.type]: r.count }), {}),
         userReactions: userReactions.map(r => r.type),
         comments: comments.count,
-        isSubscribedToAuthor
+        isSubscribedToAuthor,
+        poll
       });
     }
     res.json(results);
@@ -351,12 +389,14 @@ function authMiddleware(req, res, next) {
       const reactions = await db.all('SELECT type, COUNT(*) as count FROM reactions WHERE post_id = ? GROUP BY type', p.id);
       const comments = await db.get('SELECT COUNT(*) as count FROM comments WHERE post_id = ?', p.id);
       const userReactions = await db.all('SELECT type FROM reactions WHERE post_id = ? AND user_id = ?', p.id, userId);
+      const poll = await getPollForPost(p.id, userId);
       results.push({
         ...p,
         reactions: reactions.reduce((acc, r) => ({ ...acc, [r.type]: r.count }), {}),
         userReactions: userReactions.map(r => r.type),
         comments: comments.count,
-        isSubscribedToAuthor: true
+        isSubscribedToAuthor: true,
+        poll
       });
     }
     res.json(results);
@@ -401,29 +441,68 @@ function authMiddleware(req, res, next) {
       isSubscribedToAuthor = !!sub;
     }
 
+    const poll = await getPollForPost(p.id, userId);
     res.json({
       ...p,
       reactions: reactions.reduce((acc, r) => ({ ...acc, [r.type]: r.count }), {}),
       userReactions: userReactions.map(r => r.type),
       comments: comments.count,
-      isSubscribedToAuthor
+      isSubscribedToAuthor,
+      poll
     });
   });
 
+  async function savePollForPost(postId, pollData, created_at) {
+    if (!pollData || !pollData.question || !Array.isArray(pollData.options) || pollData.options.length < 2) return;
+    const pollResult = await db.run(
+      'INSERT INTO polls (post_id, question, created_at) VALUES (?, ?, ?)',
+      postId, pollData.question.trim(), created_at
+    );
+    const pollId = pollResult.lastID;
+    for (let i = 0; i < pollData.options.length; i++) {
+      const opt = pollData.options[i];
+      if (opt && opt.trim()) {
+        await db.run('INSERT INTO poll_options (poll_id, text, sort_order) VALUES (?, ?, ?)', pollId, opt.trim(), i);
+      }
+    }
+  }
+
+  async function getPollForPost(postId, userId) {
+    const poll = await db.get('SELECT id, question FROM polls WHERE post_id = ?', postId);
+    if (!poll) return null;
+    const options = await db.all(
+      'SELECT po.id, po.text, COUNT(pv.id) as votes FROM poll_options po LEFT JOIN poll_votes pv ON pv.option_id = po.id WHERE po.poll_id = ? GROUP BY po.id ORDER BY po.sort_order',
+      poll.id
+    );
+    let userVote = null;
+    if (userId) {
+      const vote = await db.get('SELECT option_id FROM poll_votes WHERE poll_id = ? AND user_id = ?', poll.id, userId);
+      if (vote) userVote = vote.option_id;
+    }
+    return { id: poll.id, question: poll.question, options, userVote };
+  }
+
   app.post('/api/posts', authMiddleware, async (req, res) => {
     try {
-      const { content, category } = req.body;
+      const { content, category, poll } = req.body;
       if (!content || content.trim() === '') {
         return res.status(400).json({ error: 'content required' });
       }
       const created_at = Date.now();
       const result = await db.run('INSERT INTO posts (user_id, content, image, audio, category, created_at) VALUES (?, ?, ?, ?, ?, ?)', req.user.id, content, null, null, category || null, created_at);
-      const post = await db.get('SELECT p.id, p.content, p.image, p.audio, p.category, p.created_at, u.id as user_id, u.username, u.avatar FROM posts p JOIN users u ON u.id = p.user_id WHERE p.id = ?', result.lastID);
+      const postId = result.lastID;
+
+      if (poll) {
+        const pollData = typeof poll === 'string' ? JSON.parse(poll) : poll;
+        await savePollForPost(postId, pollData, created_at);
+      }
+
+      const post = await db.get('SELECT p.id, p.content, p.image, p.audio, p.category, p.created_at, u.id as user_id, u.username, u.avatar FROM posts p JOIN users u ON u.id = p.user_id WHERE p.id = ?', postId);
       
       // Notify all subscribers
       const subscribers = await db.all('SELECT subscriber_id FROM subscriptions WHERE subscribed_to_id = ?', req.user.id);
       for (const sub of subscribers) {
-        await db.run('INSERT INTO notifications (user_id, type, from_user_id, post_id, created_at) VALUES (?, ?, ?, ?, ?)', sub.subscriber_id, 'new_post', req.user.id, result.lastID, created_at);
+        await db.run('INSERT INTO notifications (user_id, type, from_user_id, post_id, created_at) VALUES (?, ?, ?, ?, ?)', sub.subscriber_id, 'new_post', req.user.id, postId, created_at);
       }
       
       res.json(post);
@@ -435,18 +514,25 @@ function authMiddleware(req, res, next) {
 
   app.post('/api/posts/with-image', authMiddleware, uploadPostImage.single('image'), async (req, res) => {
     try {
-      const { content, category } = req.body;
+      const { content, category, poll } = req.body;
       if (!content && !req.file) {
         return res.status(400).json({ error: 'content or image required' });
       }
       const created_at = Date.now();
       const imageUrl = req.file ? '/uploads/' + req.file.filename : null;
       const result = await db.run('INSERT INTO posts (user_id, content, image, audio, category, created_at) VALUES (?, ?, ?, ?, ?, ?)', req.user.id, content || '', imageUrl, null, category || null, created_at);
-      const post = await db.get('SELECT p.id, p.content, p.image, p.audio, p.category, p.created_at, u.id as user_id, u.username, u.avatar FROM posts p JOIN users u ON u.id = p.user_id WHERE p.id = ?', result.lastID);
+      const postId = result.lastID;
+
+      if (poll) {
+        const pollData = typeof poll === 'string' ? JSON.parse(poll) : poll;
+        await savePollForPost(postId, pollData, created_at);
+      }
+
+      const post = await db.get('SELECT p.id, p.content, p.image, p.audio, p.category, p.created_at, u.id as user_id, u.username, u.avatar FROM posts p JOIN users u ON u.id = p.user_id WHERE p.id = ?', postId);
       
       const subscribers = await db.all('SELECT subscriber_id FROM subscriptions WHERE subscribed_to_id = ?', req.user.id);
       for (const sub of subscribers) {
-        await db.run('INSERT INTO notifications (user_id, type, from_user_id, post_id, created_at) VALUES (?, ?, ?, ?, ?)', sub.subscriber_id, 'new_post', req.user.id, result.lastID, created_at);
+        await db.run('INSERT INTO notifications (user_id, type, from_user_id, post_id, created_at) VALUES (?, ?, ?, ?, ?)', sub.subscriber_id, 'new_post', req.user.id, postId, created_at);
       }
       
       res.json(post);
@@ -458,7 +544,7 @@ function authMiddleware(req, res, next) {
 
   app.post('/api/posts/with-media', authMiddleware, uploadPostMedia, async (req, res) => {
     try {
-      const { content, category } = req.body || {};
+      const { content, category, poll } = req.body || {};
       const imageFile = req.files && req.files.image && req.files.image[0];
       const audioFile = req.files && req.files.audio && req.files.audio[0];
       if (!content && !imageFile && !audioFile) {
@@ -468,11 +554,18 @@ function authMiddleware(req, res, next) {
       const imageUrl = imageFile ? '/uploads/' + imageFile.filename : null;
       const audioUrl = audioFile ? '/uploads/' + audioFile.filename : null;
       const result = await db.run('INSERT INTO posts (user_id, content, image, audio, category, created_at) VALUES (?, ?, ?, ?, ?, ?)', req.user.id, content || '', imageUrl, audioUrl, category || null, created_at);
-      const post = await db.get('SELECT p.id, p.content, p.image, p.audio, p.category, p.created_at, u.id as user_id, u.username, u.avatar FROM posts p JOIN users u ON u.id = p.user_id WHERE p.id = ?', result.lastID);
+      const postId = result.lastID;
+
+      if (poll) {
+        const pollData = typeof poll === 'string' ? JSON.parse(poll) : poll;
+        await savePollForPost(postId, pollData, created_at);
+      }
+
+      const post = await db.get('SELECT p.id, p.content, p.image, p.audio, p.category, p.created_at, u.id as user_id, u.username, u.avatar FROM posts p JOIN users u ON u.id = p.user_id WHERE p.id = ?', postId);
       
       const subscribers = await db.all('SELECT subscriber_id FROM subscriptions WHERE subscribed_to_id = ?', req.user.id);
       for (const sub of subscribers) {
-        await db.run('INSERT INTO notifications (user_id, type, from_user_id, post_id, created_at) VALUES (?, ?, ?, ?, ?)', sub.subscriber_id, 'new_post', req.user.id, result.lastID, created_at);
+        await db.run('INSERT INTO notifications (user_id, type, from_user_id, post_id, created_at) VALUES (?, ?, ?, ?, ?)', sub.subscriber_id, 'new_post', req.user.id, postId, created_at);
       }
       
       res.json(post);
@@ -496,16 +589,74 @@ function authMiddleware(req, res, next) {
     res.json({ reactions: reactions.reduce((acc, r) => ({ ...acc, [r.type]: r.count }), {}) });
   });
 
+  app.post('/api/polls/:pollId/vote', authMiddleware, async (req, res) => {
+    const pollId = parseInt(req.params.pollId, 10);
+    const { optionId } = req.body;
+    if (!optionId) return res.status(400).json({ error: 'optionId required' });
+    try {
+      const poll = await db.get('SELECT id FROM polls WHERE id = ?', pollId);
+      if (!poll) return res.status(404).json({ error: 'poll not found' });
+      const option = await db.get('SELECT id FROM poll_options WHERE id = ? AND poll_id = ?', optionId, pollId);
+      if (!option) return res.status(400).json({ error: 'invalid option' });
+
+      const existing = await db.get('SELECT option_id FROM poll_votes WHERE poll_id = ? AND user_id = ?', pollId, req.user.id);
+      if (existing) {
+        if (existing.option_id === optionId) {
+          await db.run('DELETE FROM poll_votes WHERE poll_id = ? AND user_id = ?', pollId, req.user.id);
+        } else {
+          await db.run('UPDATE poll_votes SET option_id = ? WHERE poll_id = ? AND user_id = ?', optionId, pollId, req.user.id);
+        }
+      } else {
+        await db.run('INSERT INTO poll_votes (poll_id, option_id, user_id) VALUES (?, ?, ?)', pollId, optionId, req.user.id);
+      }
+
+      const options = await db.all(
+        'SELECT po.id, po.text, COUNT(pv.id) as votes FROM poll_options po LEFT JOIN poll_votes pv ON pv.option_id = po.id WHERE po.poll_id = ? GROUP BY po.id ORDER BY po.sort_order',
+        pollId
+      );
+      const vote = await db.get('SELECT option_id FROM poll_votes WHERE poll_id = ? AND user_id = ?', pollId, req.user.id);
+      res.json({ options, userVote: vote ? vote.option_id : null });
+    } catch (err) {
+      console.error('Error in POST /api/polls/:pollId/vote:', err);
+      res.status(500).json({ error: err.message });
+    }
+  });
+
   app.get('/api/posts/:id/comments', async (req, res) => {
     const postId = req.params.id;
-    const comments = await db.all(`
-      SELECT c.id, c.content, c.created_at, u.id as user_id, u.username, u.avatar
+    const auth = req.headers.authorization;
+    let userId = null;
+    if (auth) {
+      const parts = auth.split(' ');
+      if (parts.length === 2 && parts[0] === 'Bearer') {
+        try {
+          const payload = jwt.verify(parts[1], JWT_SECRET);
+          userId = payload.id;
+        } catch (err) {}
+      }
+    }
+
+    const comments = await db.all(
+      `
+      SELECT c.id, c.content, c.created_at,
+             u.id as user_id, u.username, u.avatar,
+             (SELECT COUNT(*) FROM comment_likes cl WHERE cl.comment_id = c.id) as likes,
+             (SELECT 1 FROM comment_likes cl WHERE cl.comment_id = c.id AND cl.user_id = ? LIMIT 1) as liked_by_me
       FROM comments c
       JOIN users u ON u.id = c.user_id
       WHERE c.post_id = ?
       ORDER BY c.created_at ASC
-    `, postId);
-    res.json(comments);
+      `,
+      userId || -1,
+      postId
+    );
+    res.json(
+      comments.map(({ liked_by_me, ...c }) => ({
+        ...c,
+        likes: typeof c.likes === 'number' ? c.likes : 0,
+        likedByMe: !!liked_by_me
+      }))
+    );
   });
 
   app.post('/api/posts/:id/comments', authMiddleware, async (req, res) => {
@@ -514,8 +665,49 @@ function authMiddleware(req, res, next) {
     if (!content) return res.status(400).json({ error: 'content required' });
     const created_at = Date.now();
     const result = await db.run('INSERT INTO comments (post_id, user_id, content, created_at) VALUES (?, ?, ?, ?)', postId, req.user.id, content, created_at);
-    const comment = await db.get('SELECT c.id, c.content, c.created_at, u.id as user_id, u.username, u.avatar FROM comments c JOIN users u ON u.id = c.user_id WHERE c.id = ?', result.lastID);
-    res.json(comment);
+    const comment = await db.get(
+      `
+      SELECT c.id, c.content, c.created_at, u.id as user_id, u.username, u.avatar
+      FROM comments c
+      JOIN users u ON u.id = c.user_id
+      WHERE c.id = ?
+      `,
+      result.lastID
+    );
+    res.json({ ...comment, likes: 0, likedByMe: false });
+  });
+
+  app.post('/api/comments/:id/like', authMiddleware, async (req, res) => {
+    const commentId = parseInt(req.params.id, 10);
+    if (!commentId) return res.status(400).json({ error: 'invalid id' });
+    try {
+      const created_at = Date.now();
+      try {
+        await db.run(
+          'INSERT INTO comment_likes (comment_id, user_id, created_at) VALUES (?, ?, ?)',
+          commentId,
+          req.user.id,
+          created_at
+        );
+      } catch (err) {
+        // toggle off if already liked
+        await db.run('DELETE FROM comment_likes WHERE comment_id = ? AND user_id = ?', commentId, req.user.id);
+      }
+      const row = await db.get(
+        `
+        SELECT
+          (SELECT COUNT(*) FROM comment_likes WHERE comment_id = ?) as likes,
+          (SELECT 1 FROM comment_likes WHERE comment_id = ? AND user_id = ? LIMIT 1) as liked_by_me
+        `,
+        commentId,
+        commentId,
+        req.user.id
+      );
+      res.json({ likes: row && typeof row.likes === 'number' ? row.likes : 0, likedByMe: !!(row && row.liked_by_me) });
+    } catch (err) {
+      console.error('Error in POST /api/comments/:id/like:', err);
+      res.status(500).json({ error: err.message });
+    }
   });
 
   app.delete('/api/posts/:id', authMiddleware, async (req, res) => {
@@ -531,8 +723,15 @@ function authMiddleware(req, res, next) {
       
       // Delete related data
       await db.run('DELETE FROM reactions WHERE post_id = ?', postId);
+      await db.run('DELETE FROM comment_likes WHERE comment_id IN (SELECT id FROM comments WHERE post_id = ?)', postId);
       await db.run('DELETE FROM comments WHERE post_id = ?', postId);
       await db.run('DELETE FROM notifications WHERE post_id = ?', postId);
+      const pollRow = await db.get('SELECT id FROM polls WHERE post_id = ?', postId);
+      if (pollRow) {
+        await db.run('DELETE FROM poll_votes WHERE poll_id = ?', pollRow.id);
+        await db.run('DELETE FROM poll_options WHERE poll_id = ?', pollRow.id);
+        await db.run('DELETE FROM polls WHERE id = ?', pollRow.id);
+      }
       
       // Delete post
       await db.run('DELETE FROM posts WHERE id = ?', postId);
@@ -558,6 +757,42 @@ function authMiddleware(req, res, next) {
       res.json({ success: true });
     } catch (err) {
       console.error('Error in DELETE /api/posts/:id:', err);
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.put('/api/posts/:id', authMiddleware, async (req, res) => {
+    const postId = parseInt(req.params.id, 10);
+    try {
+      const existing = await db.get('SELECT id, user_id, content, category FROM posts WHERE id = ?', postId);
+      if (!existing) {
+        return res.status(404).json({ error: 'Post not found' });
+      }
+      if (existing.user_id !== req.user.id) {
+        return res.status(403).json({ error: 'You can only edit your own posts' });
+      }
+
+      const { content, category } = req.body || {};
+      const newContent = typeof content === 'string' ? content : existing.content;
+      const newCategory = typeof category === 'string'
+        ? (category && category.trim() ? category.trim() : null)
+        : existing.category;
+
+      await db.run(
+        'UPDATE posts SET content = ?, category = ? WHERE id = ?',
+        newContent,
+        newCategory,
+        postId
+      );
+
+      const updated = await db.get(
+        'SELECT p.id, p.content, p.image, p.audio, p.category, p.created_at, u.id as user_id, u.username, u.avatar FROM posts p JOIN users u ON u.id = p.user_id WHERE p.id = ?',
+        postId
+      );
+
+      res.json(updated);
+    } catch (err) {
+      console.error('Error in PUT /api/posts/:id:', err);
       res.status(500).json({ error: err.message });
     }
   });
@@ -746,6 +981,14 @@ function authMiddleware(req, res, next) {
     res.json({ success: true });
   });
 
+  app.get('/api/messages/unread-count', authMiddleware, async (req, res) => {
+    const row = await db.get(
+      'SELECT COUNT(*) as count FROM messages WHERE to_user_id = ? AND is_read = 0',
+      req.user.id
+    );
+    res.json({ count: row ? row.count : 0 });
+  });
+
   // Stories: create and list
   app.post('/api/stories', authMiddleware, (req, res) => {
     uploadStoryMedia(req, res, async (err) => {
@@ -826,7 +1069,14 @@ function authMiddleware(req, res, next) {
     res.json({ status: 'ok' });
   });
 
-  app.listen(PORT, () => {
-    console.log(`Server running on http://localhost:${PORT}`);
+  app.listen(PORT, async () => {
+    const url = `http://localhost:${PORT}`;
+    console.log(`Server running on \x1b[36m\x1b[4m${url}\x1b[0m`);
+    try {
+      const { default: open } = await import('open');
+      await open(url);
+    } catch (e) {
+      // ignore if open fails
+    }
   });
 })();
