@@ -9,11 +9,20 @@ const multer = require('multer');
 const fs = require('fs').promises;
 const crypto = require('crypto');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-me';
+const DEFAULT_DATA_DIR = process.env.DATA_DIR || path.join(__dirname, 'data');
+const DB_PATH = process.env.DB_PATH || path.join(DEFAULT_DATA_DIR, 'data.db');
+const uploadDir = process.env.UPLOAD_DIR || path.join(DEFAULT_DATA_DIR, 'uploads');
+
+const JWT_SECRET =
+  process.env.JWT_SECRET ||
+  (process.env.NODE_ENV === 'production' ? null : 'dev-secret-change-me');
 const PORT = process.env.PORT || 3000;
 
+if (!JWT_SECRET) {
+  throw new Error('JWT_SECRET must be set in production');
+}
+
 // Multer configuration for file uploads
-const uploadDir = path.join(__dirname, 'uploads');
 const storage = multer.diskStorage({
   destination: async (req, file, cb) => {
     await fs.mkdir(uploadDir, { recursive: true });
@@ -101,7 +110,8 @@ const uploadStoryMedia = multer({
 }).single('media');
 
 async function initDb() {
-  const db = await open({ filename: path.join(__dirname, 'data.db'), driver: sqlite3.Database });
+  await fs.mkdir(path.dirname(DB_PATH), { recursive: true });
+  const db = await open({ filename: DB_PATH, driver: sqlite3.Database });
   await db.exec(`
     CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT);
     CREATE TABLE IF NOT EXISTS users (
@@ -236,6 +246,11 @@ async function initDb() {
   return db;
 }
 
+function uploadPathFromUrl(urlPath) {
+  if (!urlPath) return null;
+  return path.join(uploadDir, path.basename(urlPath));
+}
+
 function authMiddleware(req, res, next) {
   const auth = req.headers.authorization;
   if (!auth) return res.status(401).json({ error: 'Missing auth' });
@@ -253,6 +268,7 @@ function authMiddleware(req, res, next) {
 (async () => {
   const db = await initDb();
   const app = express();
+  app.set('trust proxy', 1);
   app.use(helmet());
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
@@ -738,17 +754,17 @@ function authMiddleware(req, res, next) {
       
       // Delete files if they exist
       if (post.image) {
-        const imagePath = path.join(__dirname, post.image);
+        const imagePath = uploadPathFromUrl(post.image);
         try {
-          await fs.unlink(imagePath);
+          if (imagePath) await fs.unlink(imagePath);
         } catch (err) {
           console.error('Error deleting image file:', err);
         }
       }
       if (post.audio) {
-        const audioPath = path.join(__dirname, post.audio);
+        const audioPath = uploadPathFromUrl(post.audio);
         try {
-          await fs.unlink(audioPath);
+          if (audioPath) await fs.unlink(audioPath);
         } catch (err) {
           console.error('Error deleting audio file:', err);
         }
