@@ -1,6 +1,8 @@
 node_modules/
 uploads/
+data/
 data.db
 *.log
 .env
 .DS_Store
+nul
