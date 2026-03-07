@@ -425,19 +425,8 @@ function renderAuth(){
   const area = document.getElementById('auth-area');
   area.innerHTML = '';
   if (!state.user) {
-    const loginBtn = document.createElement('button');
-    loginBtn.textContent = t('login');
-    loginBtn.className = 'link';
-    loginBtn.onclick = showLogin;
-
-    const regBtn = document.createElement('button');
-    regBtn.textContent = t('register');
-    regBtn.className = 'link';
-    regBtn.style.marginLeft = '8px';
-    regBtn.onclick = showRegister;
-
-    area.appendChild(loginBtn);
-    area.appendChild(regBtn);
+    // Hide auth buttons in header for unauthenticated users
+    // They will see the full-screen auth modal instead
     const cp = document.getElementById('create-post'); if (cp) cp.classList.add('hidden');
   } else {
     const cp = document.getElementById('create-post'); if (cp) cp.classList.remove('hidden');
@@ -466,40 +455,41 @@ function renderSettingsMenu() {
   const menu = document.getElementById('settings-menu');
   if (!menu) return;
 
-  let logoutRow = document.getElementById('settings-logout-row');
+  // Removed second logout button as per user request
+  // let logoutRow = document.getElementById('settings-logout-row');
 
-  if (state.user) {
-    if (!logoutRow) {
-      logoutRow = document.createElement('div');
-      logoutRow.id = 'settings-logout-row';
-      logoutRow.className = 'settings-row';
+  // if (state.user) {
+  //   if (!logoutRow) {
+  //     logoutRow = document.createElement('div');
+  //     logoutRow.id = 'settings-logout-row';
+  //     logoutRow.className = 'settings-row';
 
-      const label = document.createElement('span');
-      label.className = 'settings-label';
-      const btn = document.createElement('button');
-      btn.id = 'settings-logout-btn';
-      btn.type = 'button';
+  //     const label = document.createElement('span');
+  //     label.className = 'settings-label';
+  //     const btn = document.createElement('button');
+  //     btn.id = 'settings-logout-btn';
+  //     btn.type = 'button';
 
-      logoutRow.appendChild(label);
-      logoutRow.appendChild(btn);
-      menu.appendChild(logoutRow);
-    }
+  //     logoutRow.appendChild(label);
+  //     logoutRow.appendChild(btn);
+  //     menu.appendChild(logoutRow);
+  //   }
 
-    const labelEl = logoutRow.querySelector('.settings-label');
-    const btnEl = logoutRow.querySelector('button');
-    if (labelEl) {
-      labelEl.textContent = state.lang === 'ru' ? 'Аккаунт' : 'Account';
-    }
-    if (btnEl) {
-      btnEl.textContent = t('logout');
-      btnEl.onclick = () => {
-        clearAuth();
-        closeSettingsMenu();
-      };
-    }
-  } else if (logoutRow) {
-    logoutRow.remove();
-  }
+  //   const labelEl = logoutRow.querySelector('.settings-label');
+  //   const btnEl = logoutRow.querySelector('button');
+  //   if (labelEl) {
+  //     labelEl.textContent = state.lang === 'ru' ? 'Аккаунт' : 'Account';
+  //   }
+  //   if (btnEl) {
+  //     btnEl.textContent = t('logout');
+  //     btnEl.onclick = () => {
+  //       clearAuth();
+  //       closeSettingsMenu();
+  //     };
+  //   }
+  // } else if (logoutRow) {
+  //   logoutRow.remove();
+  // }
 }
 
 function showBotCheck(onSuccess){
@@ -789,6 +779,10 @@ function showLogin(){
 function showRegister(){
   const { root } = makeModal(`
     <h2>${t('registerTitle')}</h2>
+    <div id="lamp-container" style="text-align: center; margin-bottom: 20px; cursor: pointer; user-select: none;">
+      <div id="lamp-bulb" style="font-size: 60px; transition: text-shadow 0.3s ease;" data-on="false">💡</div>
+      <p style="font-size: 12px; color: #666; margin: 8px 0 0 0;">Click lamp to toggle lights</p>
+    </div>
     <input id="rg-user" placeholder="username">
     <div style="display: flex; gap: 5px; margin-bottom: 8px; align-items: center;">
       <input id="rg-pass" type="password" placeholder="password" style="flex: 1;">
@@ -820,6 +814,30 @@ function showRegister(){
   const passRepeatInput = document.getElementById('rg-pass2');
   const toggleBtn = document.getElementById('rg-toggle');
   const generateBtn = document.getElementById('rg-generate');
+  const lampBulb = document.getElementById('lamp-bulb');
+  const lampContainer = document.getElementById('lamp-container');
+  
+  let lampIsOn = false;
+
+  // Set up lamp toggle
+  if (lampBulb && lampContainer) {
+    lampContainer.onclick = () => {
+      lampIsOn = !lampIsOn;
+      lampBulb.setAttribute('data-on', lampIsOn ? 'true' : 'false');
+      
+      if (lampIsOn) {
+        lampBulb.textContent = '💡';
+        lampBulb.style.textShadow = '0 0 20px rgba(255, 200, 0, 0.8)';
+        root.style.backgroundColor = '#1c1f24';
+        gsap.to(root, { backgroundColor: '#1c1f24', duration: 0.6 });
+      } else {
+        lampBulb.textContent = '🌙';
+        lampBulb.style.textShadow = 'none';
+        root.style.backgroundColor = '#121417';
+        gsap.to(root, { backgroundColor: '#121417', duration: 0.6 });
+      }
+    };
+  }
 
   if (generateBtn) {
     generateBtn.onclick = () => {
@@ -1435,7 +1453,24 @@ function renderRecommendedSection() {
 
 async function loadPosts() {
   const headers = state.token ? { Authorization: 'Bearer ' + state.token } : {};
-  const posts = await fetch('/api/posts', { headers }).then(r => r.json());
+  const response = await fetch('/api/posts', { headers });
+  
+  if (response.status === 401) {
+    // Not authenticated - show auth screen
+    allFeedPosts = [];
+    const postsContainer = document.getElementById('posts');
+    if (postsContainer) {
+      postsContainer.innerHTML = `
+        <div style="text-align: center; padding: 60px 20px; color: #999; min-height: 70vh; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+          <h2 style="margin-bottom: 10px; font-size: 28px;">🔐 Добро пожаловать в Green Social</h2>
+          <p style="margin-bottom: 30px; font-size: 16px; max-width: 500px;">Присоединяйтесь к нашему сообществу чтобы видеть посты, комментировать и общаться с другими пользователями</p>
+        </div>
+      `;
+    }
+    return;
+  }
+  
+  const posts = await response.json();
   allFeedPosts = Array.isArray(posts) ? posts : [];
   renderCategoryBar(allFeedPosts);
   renderRecommendedSection();
@@ -1902,8 +1937,8 @@ document.getElementById('post-video').onchange = (e) => {
 
 document.getElementById('btn-post').onclick = async () => {
   if (!state.token) { showAlert(t('loginToPost')); return; }
-  const editor = document.getElementById('post-editor');
-  const content = editor ? editor.innerHTML.trim() : '';
+  const contentInput = document.getElementById('post-content');
+  const content = contentInput ? contentInput.value.trim() : '';
   const categoryTextInput = document.getElementById('post-category-text');
   const emojiBtn = document.getElementById('post-category-emoji');
   const categoryEmoji = (emojiBtn && emojiBtn.dataset && emojiBtn.dataset.emoji) ? emojiBtn.dataset.emoji.trim() : '';
@@ -1952,7 +1987,7 @@ document.getElementById('btn-post').onclick = async () => {
     }
     
     if (res.id) {
-      if (editor) editor.innerHTML = '';
+      if (contentInput) contentInput.value = '';
       if (categoryTextInput) categoryTextInput.value = '';
       if (emojiBtn) { delete emojiBtn.dataset.emoji; emojiBtn.textContent = '😊'; }
       if (pollQuestionInput) pollQuestionInput.value = '';

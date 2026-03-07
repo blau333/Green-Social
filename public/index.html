@@ -6,6 +6,8 @@
 
   <link rel="stylesheet" href="/styles.css">
 <script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.4/howler.min.js"></script>
 
 </head>
 <body>
@@ -56,17 +58,7 @@
       <section id="feed-page" class="page">
         <section id="stories-bar" class="card stories-bar hidden"></section>
         <section id="create-post" class="card hidden">
-          <div class="rich-editor">
-            <div class="editor-toolbar">
-              <button type="button" class="editor-btn" data-cmd="bold" title="Bold"><b>B</b></button>
-              <button type="button" class="editor-btn" data-cmd="italic" title="Italic"><i>I</i></button>
-              <button type="button" class="editor-btn" data-cmd="underline" title="Underline"><u>U</u></button>
-              <button type="button" class="editor-btn" data-cmd="insertUnorderedList" title="Bullet list">• List</button>
-              <button type="button" class="editor-btn" data-cmd="formatBlock" data-value="blockquote" title="Quote">❝ ❞</button>
-              <button type="button" class="editor-btn" data-cmd="removeFormat" title="Clear formatting">✖</button>
-            </div>
-            <div id="post-editor" class="editor-area" contenteditable="true" data-placeholder="Hows it going?"></div>
-          </div>
+          <textarea id="post-content" class="post-textarea" placeholder="О чём вы думаете?"></textarea>
           <div class="post-category-row">
             <button id="post-category-emoji" type="button" class="emoji-picker-btn" title="Выбрать эмодзи категории">😊</button>
             <input id="post-category-text" class="post-category-input" placeholder="Category text (optional)">
