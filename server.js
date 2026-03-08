@@ -431,6 +431,7 @@ function authMiddleware(req, res, next) {
       }
 
       const isSubscribedToAuthor = userId ? subscribedIds.includes(p.user_id) : false;
+      const poll = await getPollForPost(p.id, userId);
       results.push({
         ...p,
         reactions: reactions.reduce((acc, r) => ({ ...acc, [r.type]: r.count }), {}),
@@ -508,6 +509,7 @@ function authMiddleware(req, res, next) {
       );
       isSubscribedToAuthor = !!sub;
     }
+    const poll = await getPollForPost(p.id, userId);
 
     res.json({
       ...p,
@@ -1111,7 +1113,7 @@ function authMiddleware(req, res, next) {
     }
   });
 
-  app.post('/api/messages/:userId', authMiddleware, async (req, res) => {
+  app.post('/api/messages/:userId(\\d+)', authMiddleware, async (req, res) => {
     const toUserId = parseInt(req.params.userId);
     const { content } = req.body;
     if (!content || content.trim() === '') {
@@ -1126,7 +1128,7 @@ function authMiddleware(req, res, next) {
     }
   });
 
-  app.get('/api/messages/:userId', authMiddleware, async (req, res) => {
+  app.get('/api/messages/:userId(\\d+)', authMiddleware, async (req, res) => {
     const otherUserId = parseInt(req.params.userId);
     const messages = await db.all(`
       SELECT m.id, m.from_user_id, m.to_user_id, m.content, m.is_read, m.created_at, 
@@ -1157,7 +1159,7 @@ function authMiddleware(req, res, next) {
     res.json(dialogs);
   });
 
-  app.post('/api/messages/:userId/read', authMiddleware, async (req, res) => {
+  app.post('/api/messages/:userId(\\d+)/read', authMiddleware, async (req, res) => {
     const fromUserId = parseInt(req.params.userId);
     await db.run('UPDATE messages SET is_read = 1 WHERE from_user_id = ? AND to_user_id = $2', fromUserId, req.user.id);
     res.json({ success: true });
