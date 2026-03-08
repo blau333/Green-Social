@@ -58,13 +58,13 @@
       <section id="feed-page" class="page">
         <section id="stories-bar" class="card stories-bar hidden"></section>
         <section id="create-post" class="card hidden">
-          <textarea id="post-content" class="post-textarea" placeholder="О чём вы думаете?"></textarea>
+          <textarea id="post-content" class="post-textarea" placeholder="What's new?"></textarea>
           <div class="post-category-row">
             <button id="post-category-emoji" type="button" class="emoji-picker-btn" title="Выбрать эмодзи категории">😊</button>
             <input id="post-category-text" class="post-category-input" placeholder="Category text (optional)">
           </div>
           <div id="poll-fields" class="poll-create-fields poll-block" style="display:none;">
-            <div class="poll-question">📊 Создать опрос</div>
+            <div id="create-poll-title" class="poll-question">📊 Create poll</div>
             <input id="poll-question" type="text" placeholder="Вопрос для опроса" class="poll-create-input">
             <div id="poll-options">
               <input type="text" class="poll-option-input poll-create-input" placeholder="Вариант 1">
@@ -117,7 +117,7 @@
     </nav>
     <button id="scroll-top-btn" class="scroll-top-btn hidden" type="button" title="Back to top">⬆️</button>
     <footer>
-      <p>Created by blau3 and Komi</p>
+      <p id="footer-credit">Created by blau3 and Komi</p>
       <a href="https://t.me/blau030" target="_blank">
         <img src="telegram.png" alt="Telegram" width="40">
       </a>
