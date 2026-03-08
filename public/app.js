@@ -100,7 +100,45 @@ const i18n = {
     editorList: 'Bullet list',
     editorQuote: 'Quote',
     editorClear: 'Clear formatting',
-    editorListLabel: 'List'
+    editorListLabel: 'List',
+    settingsLabel: 'Settings',
+    scrollTopTitle: 'Back to top',
+    footerCredit: 'Created by blau3 and Komi',
+    pollCreateTitle: '📊 Create poll',
+    messageTitle: 'Message',
+    confirmTitle: 'Confirm',
+    yes: 'Yes',
+    no: 'No',
+    botCheckTitle: 'Bot check',
+    botCheckQuestionPrefix: 'What is',
+    botCheckWrong: 'Wrong answer, please try again',
+    botCheckPlaceholder: 'Enter the sum',
+    ok: 'OK',
+    voteSavedLocal: 'Thanks, your vote is saved locally on this device.',
+    noReactions: 'No reactions',
+    reactAction: 'React',
+    recommendedForYou: 'Recommended for you',
+    authWelcomeTitle: 'Welcome to Green Social',
+    authWelcomeDesc: 'Join the community to view posts, comment, and chat with other users.',
+    allCategories: 'All categories',
+    chooseCategoryEmoji: 'Choose category emoji',
+    yourSubscriptions: 'Your subscriptions',
+    noCommentsYet: 'No comments yet',
+    createPostRequired: 'Write something or add media',
+    startChat: 'Say hello!',
+    storyTitle: 'Voice story',
+    storySubtitle: 'Record a short voice message',
+    storyTextPlaceholder: 'Text (optional)',
+    share: 'Share',
+    recordVoiceFirst: 'Record your voice first',
+    storyCreateFailed: 'Failed to create story',
+    usernamePlaceholder: 'username',
+    passwordPlaceholder: 'password',
+    repeatPasswordPlaceholder: 'repeat password',
+    showPassword: 'Show password',
+    hidePassword: 'Hide password',
+    generatePassword: 'Generate password',
+    lampToggleHint: 'Click lamp to toggle lights'
   },
   ru: {
     login: 'Вход', register: 'Регистрация', logout: 'Выход', hi: 'Йоу,', welcome: 'Добро пожаловать', postPlaceholder: 'Что нового?', post: 'Опубликовать', publishedPosts: 'Опубликованные посты', comments: 'Комментарии', writeComment: 'Написать комментарий', send: 'Отправить', create: 'Создать', cancel: 'Отмена', loginFailed: 'Ошибка входа', regFailed: 'Ошибка регистрации', loginTitle: 'Вход', registerTitle: 'Создать аккаунт', reactLike: 'Нравится', reactLove: 'Люблю', reactFunny: 'Смешно', loginToReact: 'Войдите чтобы реагировать', loginToComment: 'Войдите чтобы комментировать', loginToPost: 'Войдите чтобы публиковать', subscribe: 'Подписаться', unsubscribe: 'Отписаться', subscribers: 'Подписчики', editProfile: 'Редактировать профиль', notifications: 'Уведомления', noNotifications: 'Нет уведомлений', markAllAsRead: 'Отметить все как прочитанные', subscribedYou: 'подписался на вас', postedNew: 'опубликовал новый пост', feed: 'Лента', subscriptions: 'Подписки', messages: 'Сообщения', noMessages: 'Нет сообщений', typeMessage: 'Напишите сообщение...', sendMessage: 'Написать сообщение',
@@ -170,7 +208,45 @@ const i18n = {
     editorList: 'Список',
     editorQuote: 'Цитата',
     editorClear: 'Очистить форматирование',
-    editorListLabel: 'Список'
+    editorListLabel: 'Список',
+    settingsLabel: 'Настройки',
+    scrollTopTitle: 'Наверх',
+    footerCredit: 'Created by blau3 and Komi',
+    pollCreateTitle: '📊 Создать опрос',
+    messageTitle: 'Сообщение',
+    confirmTitle: 'Подтверждение',
+    yes: 'Да',
+    no: 'Нет',
+    botCheckTitle: 'Проверка, что вы не бот',
+    botCheckQuestionPrefix: 'Сколько будет',
+    botCheckWrong: 'Неверный ответ, попробуйте ещё раз',
+    botCheckPlaceholder: 'Введите сумму',
+    ok: 'ОК',
+    voteSavedLocal: 'Спасибо, ваш голос учтен (локально на этом устройстве).',
+    noReactions: 'Нет реакций',
+    reactAction: 'Реакция',
+    recommendedForYou: 'Рекомендовано для вас',
+    authWelcomeTitle: 'Добро пожаловать в Green Social',
+    authWelcomeDesc: 'Присоединяйтесь к сообществу, чтобы видеть посты, комментировать и общаться с другими пользователями.',
+    allCategories: 'Все категории',
+    chooseCategoryEmoji: 'Выбери эмодзи категории',
+    yourSubscriptions: 'Ваши подписки',
+    noCommentsYet: 'Пока нет комментариев',
+    createPostRequired: 'Напишите что-нибудь или добавьте медиа',
+    startChat: 'Начните диалог!',
+    storyTitle: 'Голосовая история',
+    storySubtitle: 'Запиши короткое голосовое сообщение',
+    storyTextPlaceholder: 'Текст (по желанию)',
+    share: 'Поделиться',
+    recordVoiceFirst: 'Сначала запиши голос',
+    storyCreateFailed: 'Не удалось создать историю',
+    usernamePlaceholder: 'имя пользователя',
+    passwordPlaceholder: 'пароль',
+    repeatPasswordPlaceholder: 'повторите пароль',
+    showPassword: 'Показать пароль',
+    hidePassword: 'Скрыть пароль',
+    generatePassword: 'Сгенерировать пароль',
+    lampToggleHint: 'Нажми на лампу, чтобы переключить свет'
   }
 };
 
@@ -356,6 +432,12 @@ function applyUiText() {
   const newStoryBtn = document.getElementById('btn-new-story');
   if (newStoryBtn) newStoryBtn.title = t('newStory');
 
+  const settingsBtn = document.getElementById('settings-btn');
+  if (settingsBtn) {
+    settingsBtn.title = t('settingsLabel');
+    settingsBtn.setAttribute('aria-label', t('settingsLabel'));
+  }
+
   const settingsLanguageLabel = document.getElementById('settings-language-label');
   if (settingsLanguageLabel) settingsLanguageLabel.textContent = t('languageLabel');
 
@@ -365,8 +447,8 @@ function applyUiText() {
   const themeBtn = document.getElementById('theme-toggle');
   if (themeBtn) themeBtn.title = t('toggleTheme');
 
-  const postEditor = document.getElementById('post-editor');
-  if (postEditor && postEditor.dataset) postEditor.dataset.placeholder = t('postPlaceholder');
+  const postContent = document.getElementById('post-content');
+  if (postContent) postContent.placeholder = t('postPlaceholder');
 
   const postCategoryText = document.getElementById('post-category-text');
   if (postCategoryText) postCategoryText.placeholder = t('categoryTextPlaceholder');
@@ -377,6 +459,8 @@ function applyUiText() {
   if (btnAudio) btnAudio.title = t('addAudio');
   const btnVideo = document.getElementById('btn-video');
   if (btnVideo) btnVideo.title = t('addVideo');
+  const btnPolls = document.getElementById('btn-polls');
+  if (btnPolls) btnPolls.title = t('addPoll');
 
   const pollToggleBtn = document.getElementById('poll-toggle-btn');
   const pollFields = document.getElementById('poll-fields');
@@ -400,6 +484,25 @@ function applyUiText() {
   const addPollOptionBtn = document.getElementById('add-poll-option');
   if (addPollOptionBtn) addPollOptionBtn.textContent = '+ ' + t('addPollOption');
 
+  const pollCreateTitle = document.getElementById('create-poll-title');
+  if (pollCreateTitle) pollCreateTitle.textContent = t('pollCreateTitle');
+
+  const searchInput = document.getElementById('user-id-search');
+  if (searchInput) {
+    searchInput.placeholder = t('userIdPlaceholder');
+    searchInput.setAttribute('aria-label', t('searchUserById'));
+  }
+  const searchBtn = document.getElementById('btn-search-user');
+  if (searchBtn) searchBtn.title = t('searchUserById');
+
+  const scrollTopBtn = document.getElementById('scroll-top-btn');
+  if (scrollTopBtn) scrollTopBtn.title = t('scrollTopTitle');
+
+  const footerCredit = document.getElementById('footer-credit');
+  if (footerCredit) footerCredit.textContent = t('footerCredit');
+
+  renderTabLabels();
+
   // Editor toolbars (create + modals)
   document.querySelectorAll('.editor-toolbar').forEach(toolbar => {
     toolbar.querySelectorAll('.editor-btn').forEach(btn => {
@@ -415,6 +518,20 @@ function applyUiText() {
       else if (cmd === 'removeFormat') btn.title = t('editorClear');
     });
   });
+}
+
+function renderTabLabels() {
+  const feedTab = document.getElementById('tab-feed');
+  if (feedTab) feedTab.textContent = `📰 ${t('feed')}`;
+
+  const subscriptionsTab = document.getElementById('tab-subscriptions');
+  if (subscriptionsTab) subscriptionsTab.textContent = `🧑‍🤝‍🧑 ${t('subscriptions')}`;
+
+  const notificationsTab = document.getElementById('tab-notifications');
+  if (notificationsTab) notificationsTab.textContent = `🪧 ${t('notifications')}`;
+
+  const messagesTab = document.getElementById('tab-messages');
+  if (messagesTab) messagesTab.textContent = `💬 ${t('messages')}`;
 }
 
 function formatUsername(name) {
@@ -496,21 +613,17 @@ function showBotCheck(onSuccess){
   const a = 1 + Math.floor(Math.random() * 9);
   const b = 1 + Math.floor(Math.random() * 9);
   const sum = a + b;
-  const title = state.lang === 'ru' ? 'Проверка, что вы не бот' : 'Bot check';
-  const question = state.lang === 'ru'
-    ? `Сколько будет ${a} + ${b}?`
-    : `What is ${a} + ${b}?`;
-  const errorMsg = state.lang === 'ru'
-    ? 'Неверный ответ, попробуйте ещё раз'
-    : 'Wrong answer, please try again';
+  const title = t('botCheckTitle');
+  const question = `${t('botCheckQuestionPrefix')} ${a} + ${b}?`;
+  const errorMsg = t('botCheckWrong');
 
   const { root } = makeModal(`
     <h2>${title}</h2>
     <p>${question}</p>
-    <input id="bot-answer" type="number" placeholder="${state.lang === 'ru' ? 'Введите сумму' : 'Enter the sum'}">
+    <input id="bot-answer" type="number" placeholder="${t('botCheckPlaceholder')}">
     <div class="actions">
       <button data-role="cancel">${t('cancel')}</button>
-      <button data-role="ok" class="btn-primary">OK</button>
+      <button data-role="ok" class="btn-primary">${t('ok')}</button>
     </div>
   `);
   const answerEl = root.querySelector('#bot-answer');
@@ -621,10 +734,7 @@ function showPollsMenu() {
       btn.classList.add('selected');
 
       if (messageEl) {
-        messageEl.textContent =
-          lang === 'ru'
-            ? 'Спасибо, ваш голос учтён (локально на этом устройстве).'
-            : 'Thanks, your vote is saved locally on this device.';
+        messageEl.textContent = t('voteSavedLocal');
       }
     };
 
@@ -634,8 +744,8 @@ function showPollsMenu() {
 
 function showAlert(message, opts){
   const options = opts || {};
-  const title = options.title || (state.lang === 'ru' ? 'Сообщение' : 'Message');
-  const okLabel = options.okLabel || (state.lang === 'ru' ? 'ОК' : 'OK');
+  const title = options.title || t('messageTitle');
+  const okLabel = options.okLabel || t('ok');
   const { root } = makeModal(`
     <h2>${title}</h2>
     <p>${message}</p>
@@ -693,9 +803,9 @@ function showToast(message) {
 
 function showConfirm(message, opts){
   const options = opts || {};
-  const title = options.title || (state.lang === 'ru' ? 'Подтверждение' : 'Confirm');
-  const okLabel = options.okLabel || (state.lang === 'ru' ? 'Да' : 'Yes');
-  const cancelLabel = options.cancelLabel || (state.lang === 'ru' ? 'Нет' : 'No');
+  const title = options.title || t('confirmTitle');
+  const okLabel = options.okLabel || t('yes');
+  const cancelLabel = options.cancelLabel || t('no');
   return new Promise(resolve => {
     const { root } = makeModal(`
       <h2>${title}</h2>
@@ -723,14 +833,14 @@ function showConfirm(message, opts){
 function showLogin(){
   const { root } = makeModal(`
     <h2>${t('loginTitle')}</h2>
-    <input id="li-user" placeholder="username">
+    <input id="li-user" placeholder="${t('usernamePlaceholder')}">
     <div style="display:flex;gap:5px;margin-bottom:8px;align-items:center;">
-      <input id="li-pass" type="password" placeholder="password" style="flex:1;">
+      <input id="li-pass" type="password" placeholder="${t('passwordPlaceholder')}" style="flex:1;">
       <button
         id="li-pass-toggle"
         type="button"
         style="font-size:14px;padding:4px 8px;"
-        title="Show password"
+        title="${t('showPassword')}"
       >
         👁
       </button>
@@ -764,7 +874,7 @@ function showLogin(){
       const isHidden = passInput.type === 'password';
       passInput.type = isHidden ? 'text' : 'password';
       toggleBtn.textContent = isHidden ? '🙈' : '👁';
-      toggleBtn.title = isHidden ? 'Hide password' : 'Show password';
+      toggleBtn.title = isHidden ? t('hidePassword') : t('showPassword');
     };
   }
   const forgotBtn = document.getElementById('li-forgot');
@@ -781,16 +891,16 @@ function showRegister(){
     <h2>${t('registerTitle')}</h2>
     <div id="lamp-container" style="text-align: center; margin-bottom: 20px; cursor: pointer; user-select: none;">
       <div id="lamp-bulb" style="font-size: 60px; transition: text-shadow 0.3s ease;" data-on="false">💡</div>
-      <p style="font-size: 12px; color: #666; margin: 8px 0 0 0;">Click lamp to toggle lights</p>
+      <p style="font-size: 12px; color: #666; margin: 8px 0 0 0;">${t('lampToggleHint')}</p>
     </div>
-    <input id="rg-user" placeholder="username">
+    <input id="rg-user" placeholder="${t('usernamePlaceholder')}">
     <div style="display: flex; gap: 5px; margin-bottom: 8px; align-items: center;">
-      <input id="rg-pass" type="password" placeholder="password" style="flex: 1;">
+      <input id="rg-pass" type="password" placeholder="${t('passwordPlaceholder')}" style="flex: 1;">
       <button
         id="rg-toggle"
         type="button"
         style="font-size: 14px; padding: 4px 8px;"
-        title="Show password"
+        title="${t('showPassword')}"
       >
         👁
       </button>
@@ -799,10 +909,10 @@ function showRegister(){
         type="button"
         style="font-size: 11px; padding: 4px 8px; white-space: nowrap;"
       >
-        Сгенерировать пароль
+        ${t('generatePassword')}
       </button>
     </div>
-    <input id="rg-pass2" type="password" placeholder="repeat password" style="margin-bottom: 4px;">
+    <input id="rg-pass2" type="password" placeholder="${t('repeatPasswordPlaceholder')}" style="margin-bottom: 4px;">
     <div class="password-hint">${t('passwordRequirements')}</div>
     <div class="actions">
       <button id="rg-cancel">${t('cancel')}</button>
@@ -853,7 +963,7 @@ function showRegister(){
       passInput.type = isHidden ? 'text' : 'password';
       passRepeatInput.type = isHidden ? 'text' : 'password';
       toggleBtn.textContent = isHidden ? '🙈' : '👁';
-      toggleBtn.title = isHidden ? 'Hide password' : 'Show password';
+      toggleBtn.title = isHidden ? t('hidePassword') : t('showPassword');
     };
   }
 
@@ -892,7 +1002,7 @@ function showRegister(){
 function showPasswordReset() {
   const { root } = makeModal(`
     <h2>${t('resetPassword')}</h2>
-    <input id="rp-user" placeholder="username">
+    <input id="rp-user" placeholder="${t('usernamePlaceholder')}">
     <input id="rp-code" placeholder="${t('recoveryCode')}">
     <input id="rp-pass" type="password" placeholder="${t('newPassword')}">
     <input id="rp-pass2" type="password" placeholder="${t('repeatNewPassword')}">
@@ -1317,7 +1427,7 @@ function renderPostsInto(posts, containerId) {
       if (!hasAny) {
         const placeholder = document.createElement('span');
         placeholder.className = 'reaction-placeholder';
-        placeholder.textContent = state.lang === 'ru' ? 'Нет реакций' : 'No reactions';
+      placeholder.textContent = t('noReactions');
         reactionSummary.appendChild(placeholder);
       }
     }
@@ -1329,7 +1439,7 @@ function renderPostsInto(posts, containerId) {
 
     const reactBtn = document.createElement('button');
     reactBtn.className = 'react-toggle-btn';
-    reactBtn.textContent = '😊 ' + (state.lang === 'ru' ? 'Реакция' : 'React');
+      reactBtn.textContent = '😊 ' + t('reactAction');
 
     const dropdown = document.createElement('div');
     dropdown.className = 'reaction-dropdown hidden';
@@ -1447,7 +1557,7 @@ function renderRecommendedSection() {
   }
 
   wrapper.classList.remove('hidden');
-  titleEl.textContent = state.lang === 'ru' ? 'Рекомендовано для вас' : 'Recommended for you';
+  titleEl.textContent = t('recommendedForYou');
   renderPostsInto(posts, 'recommended-posts');
 }
 
@@ -1462,10 +1572,12 @@ async function loadPosts() {
     if (postsContainer) {
       postsContainer.innerHTML = `
         <div style="text-align: center; padding: 60px 20px; color: #999; min-height: 70vh; display: flex; flex-direction: column; justify-content: center; align-items: center;">
-          <h2 style="margin-bottom: 10px; font-size: 28px;">🔐 Добро пожаловать в Green Social</h2>
-          <p style="margin-bottom: 30px; font-size: 16px; max-width: 500px;">Присоединяйтесь к нашему сообществу чтобы видеть посты, комментировать и общаться с другими пользователями</p>
+          <h2 style="margin-bottom: 10px; font-size: 28px;">🔐 ${t('authWelcomeTitle')}</h2>
+          <p style="margin-bottom: 30px; font-size: 16px; max-width: 500px;">${t('authWelcomeDesc')}</p>
         </div>
       `;
+      // Ensure only informational text is shown for guests in center screen.
+      postsContainer.querySelectorAll('button').forEach((btn) => btn.remove());
     }
     return;
   }
@@ -1621,7 +1733,7 @@ function renderCategoryBar(posts) {
 
   const allBtn = document.createElement('button');
   allBtn.className = 'category-chip' + (state.currentCategoryFilter ? '' : ' active');
-  allBtn.textContent = state.lang === 'ru' ? 'Все категории' : 'All';
+  allBtn.textContent = t('allCategories');
   allBtn.onclick = () => {
     state.currentCategoryFilter = null;
     renderCategoryBar(posts);
@@ -1656,7 +1768,7 @@ function showCategoryEmojiPicker() {
     '⚽','🏀','🎮','🎧','🎬','📚','💻','📱'
   ];
   const { root, card } = makeModal(`
-    <h2 style="margin-bottom:4px">${state.lang === 'ru' ? 'Выбери эмодзи категории' : 'Choose category emoji'}</h2>
+    <h2 style="margin-bottom:4px">${t('chooseCategoryEmoji')}</h2>
     <div class="emoji-grid">
       ${emojis.map(e => `<button class="emoji-choice" data-emoji="${e}">${e}</button>`).join('')}
     </div>
@@ -1722,7 +1834,7 @@ async function loadSubscriptionsUsers() {
 
     const title = document.createElement('h3');
     title.className = 'subscriptions-users-title';
-    title.textContent = state.lang === 'ru' ? 'Ваши подписки' : 'Subscriptions';
+  title.textContent = t('yourSubscriptions');
     container.appendChild(title);
 
     const list = document.createElement('div');
@@ -1766,7 +1878,7 @@ async function loadCommentsInto(section, postId) {
     if (comments.length === 0) {
       const empty = document.createElement('div');
       empty.className = 'comment-empty';
-      empty.textContent = state.lang === 'ru' ? 'Пока нет комментариев' : 'No comments yet';
+    empty.textContent = t('noCommentsYet');
       list.appendChild(empty);
     }
     for (const c of comments) {
@@ -1963,7 +2075,7 @@ document.getElementById('btn-post').onclick = async () => {
   const hasImage = imageInput.files.length > 0;
   const hasAudio = audioInput.files.length > 0;
   const hasVideo = videoInput.files.length > 0;
-  if (!content && !hasImage && !hasAudio && !hasVideo && !poll) { showAlert('Напишите что-нибудь или добавьте медиа'); return; }
+  if (!content && !hasImage && !hasAudio && !hasVideo && !poll) { showAlert(t('createPostRequired')); return; }
 
   const postBtn = document.getElementById('btn-post');
   if (postBtn) postBtn.classList.add('btn-loading');
@@ -2538,9 +2650,7 @@ async function checkNewEventsForToasts() {
     const count = res && typeof res.count === 'number' ? res.count : 0;
     if (count > lastUnreadMessagesCount) {
       const diff = count - lastUnreadMessagesCount;
-      const text = state.lang === 'ru'
-        ? `Новых сообщений: ${diff}`
-        : `New messages: ${diff}`;
+      const text = `${t('messages')}: +${diff}`;
       showToast(text);
     }
     lastUnreadMessagesCount = count;
@@ -2689,7 +2799,7 @@ async function openChat(userId, username, avatarUrl) {
     if (msgs.length === 0) {
       const empty = document.createElement('div');
       empty.className = 'dm-msg-empty';
-      empty.textContent = state.lang === 'ru' ? 'Начните диалог!' : 'Say hello!';
+      empty.textContent = t('startChat');
       msgList.appendChild(empty);
       return;
     }
@@ -2823,6 +2933,8 @@ if (langSelect) {
     renderAuth();
     loadPosts();
     applyUiText();
+    refreshNotificationsIndicator();
+    refreshMessagesIndicator();
   };
 }
 
@@ -2879,7 +2991,7 @@ if (addPollOptionBtn) {
       const input = document.createElement('input');
       input.type = 'text';
       input.className = 'poll-option-input poll-create-input';
-      input.placeholder = 'Вариант ' + (inputs.length + 1);
+      input.placeholder = `${t('pollOptionPlaceholder')} ${inputs.length + 1}`;
       container.appendChild(input);
       input.focus();
     }
@@ -2904,9 +3016,9 @@ function showCreateStoryModal() {
   let storyBlob = null;
 
   const { root } = makeModal(`
-    <h2>${state.lang === 'ru' ? 'Голосовая история' : 'Voice story'}</h2>
+    <h2>${t('storyTitle')}</h2>
     <p class="muted" style="font-size:13px;margin-top:4px">
-      ${state.lang === 'ru' ? 'Запиши короткое голосовое сообщение' : 'Record a short voice message'}
+      ${t('storySubtitle')}
     </p>
     <div style="display:flex;flex-direction:column;align-items:center;margin:12px 0;">
       <button id="story-record-btn" type="button" class="btn-primary" style="width:64px;height:64px;border-radius:999px;display:flex;align-items:center;justify-content:center;font-size:28px;padding:0">
@@ -2914,10 +3026,10 @@ function showCreateStoryModal() {
       </button>
       <span id="story-record-status" class="voice-status hidden" style="margin-top:8px"></span>
     </div>
-    <textarea id="story-text" placeholder="${state.lang === 'ru' ? 'Текст (по желанию)' : 'Text (optional)'}" style="min-height:60px"></textarea>
+    <textarea id="story-text" placeholder="${t('storyTextPlaceholder')}" style="min-height:60px"></textarea>
     <div class="actions">
       <button data-role="cancel">${t('cancel')}</button>
-      <button data-role="create" class="btn-primary">${state.lang === 'ru' ? 'Поделиться' : 'Share'}</button>
+      <button data-role="create" class="btn-primary">${t('share')}</button>
     </div>
   `);
   const cancelBtn = root.querySelector('button[data-role="cancel"]');
@@ -2994,7 +3106,7 @@ function showCreateStoryModal() {
       const textEl = document.getElementById('story-text');
       const content = textEl ? textEl.value.trim() : '';
       if (!storyBlob) {
-        showAlert(state.lang === 'ru' ? 'Сначала запиши голос' : 'Record your voice first');
+        showAlert(t('recordVoiceFirst'));
         return;
       }
       try {
@@ -3009,7 +3121,7 @@ function showCreateStoryModal() {
         loadStories();
       } catch (e) {
         console.error('Failed to create story', e);
-        showAlert(e.message || 'Failed to create story');
+        showAlert(e.message || t('storyCreateFailed'));
       }
     };
   }

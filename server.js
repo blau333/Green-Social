@@ -326,6 +326,10 @@ function authMiddleware(req, res, next) {
     setHeaders: (res, path) => {
       if (path.endsWith('.html')) {
         res.setHeader('Cache-Control', 'no-cache');
+        return;
+      }
+      if (path.endsWith('.js') || path.endsWith('.css')) {
+        res.setHeader('Cache-Control', 'no-cache');
       }
     }
   }));
