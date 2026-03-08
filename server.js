@@ -1,5 +1,6 @@
 const express = require('express');
 const helmet = require('helmet');
+const compression = require('compression');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const path = require('path');
@@ -12,6 +13,8 @@ const sqlite3 = require('sqlite3').verbose();
 const DEFAULT_DATA_DIR = process.env.DATA_DIR || path.join(__dirname, 'data');
 const DB_PATH = process.env.DB_PATH || path.join(DEFAULT_DATA_DIR, 'data.db');
 const uploadDir = process.env.UPLOAD_DIR || path.join(DEFAULT_DATA_DIR, 'uploads');
+
+let db;
 
 const JWT_SECRET =
   process.env.JWT_SECRET ||
@@ -281,10 +284,20 @@ function authMiddleware(req, res, next) {
   const app = express();
   app.set('trust proxy', 1);
   app.use(helmet());
+  app.use(compression());
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
-  app.use(express.static(path.join(__dirname, 'public')));
-  app.use('/uploads', express.static(uploadDir));
+  app.use(express.static(path.join(__dirname, 'public'), {
+    maxAge: '1d',
+    setHeaders: (res, path) => {
+      if (path.endsWith('.html')) {
+        res.setHeader('Cache-Control', 'no-cache');
+      }
+    }
+  }));
+  app.use('/uploads', express.static(uploadDir, {
+    maxAge: '7d'
+  }));
 
   function validatePassword(p) {
     if (p.length < 8) return { ok: false, error: 'password_min_length' };
@@ -310,13 +323,13 @@ function authMiddleware(req, res, next) {
     const name = username.trim();
     const recoveryToken = generateRecoveryToken();
     try {
-      const result = await pool.query(
-        'INSERT INTO users (username, password_hash, recovery_token) VALUES (?, $2, $3) RETURNING id',
+      const result = await db.run(
+        'INSERT INTO users (username, password_hash, recovery_token) VALUES (?, ?, ?)',
         name,
         hash,
         recoveryToken
       );
-      const id = result.rows[0].id;
+      const id = result.lastID;
       const token = jwt.sign({ id, username: name }, JWT_SECRET);
       res.json({ token, username: name, id, recoveryToken });
     } catch (err) {
@@ -357,25 +370,15 @@ function authMiddleware(req, res, next) {
     res.json({ token, username: user.username, id: user.id, avatar: user.avatar, bio: user.bio });
   });
 
-  app.get('/api/posts', async (req, res) => {
-    const auth = req.headers.authorization;
-    let userId = null;
-    if (auth) {
-      const parts = auth.split(' ');
-      if (parts.length === 2 && parts[0] === 'Bearer') {
-        try {
-          const payload = jwt.verify(parts[1], JWT_SECRET);
-          userId = payload.id;
-        } catch (err) {}
-      }
-    }
+  app.get('/api/posts', authMiddleware, async (req, res) => {
+    const userId = req.user.id;
     let subscribedIds = [];
     if (userId) {
       const rows = await db.all('SELECT subscribed_to_id FROM subscriptions WHERE subscriber_id = ?', userId);
       subscribedIds = rows.map(r => r.subscribed_to_id);
     }
     const posts = await db.all(`
-      SELECT p.id, p.content, p.image, p.audio, p.video, p.category, p.created_at, u.id as user_id, u.username, u.avatar
+      SELECT p.id, p.content, p.image, p.audio, p.category, p.created_at, u.id as user_id, u.username, u.avatar
       FROM posts p
       JOIN users u ON u.id = p.user_id
       ORDER BY p.created_at DESC
@@ -414,7 +417,6 @@ function authMiddleware(req, res, next) {
       }
 
       const isSubscribedToAuthor = userId ? subscribedIds.includes(p.user_id) : false;
-      const poll = await getPollForPost(p.id, userId);
       results.push({
         ...p,
         reactions: reactions.reduce((acc, r) => ({ ...acc, [r.type]: r.count }), {}),
@@ -430,7 +432,7 @@ function authMiddleware(req, res, next) {
   app.get('/api/posts/subscriptions', authMiddleware, async (req, res) => {
     const userId = req.user.id;
     const posts = await db.all(`
-      SELECT p.id, p.content, p.image, p.audio, p.video, p.category, p.created_at, u.id as user_id, u.username, u.avatar
+      SELECT p.id, p.content, p.image, p.audio, p.category, p.created_at, u.id as user_id, u.username, u.avatar
       FROM posts p
       JOIN users u ON u.id = p.user_id
       WHERE p.user_id IN (SELECT subscribed_to_id FROM subscriptions WHERE subscriber_id = ?)
@@ -441,7 +443,7 @@ function authMiddleware(req, res, next) {
       const reactions = await db.all('SELECT type, COUNT(*) as count FROM reactions WHERE post_id = ? GROUP BY type', p.id);
       const comments = await db.get('SELECT COUNT(*) as count FROM comments WHERE post_id = ?', p.id);
       const userReactions = await db.all('SELECT type FROM reactions WHERE post_id = ? AND user_id = ?', p.id, userId);
-      const poll = await getPollForPost(p.id, userId);
+      const poll = null;
       results.push({
         ...p,
         reactions: reactions.reduce((acc, r) => ({ ...acc, [r.type]: r.count }), {}),
@@ -471,7 +473,7 @@ function authMiddleware(req, res, next) {
     }
 
     const p = await db.get(`
-      SELECT p.id, p.content, p.image, p.audio, p.video, p.category, p.created_at,
+      SELECT p.id, p.content, p.image, p.audio, p.category, p.created_at,
              u.id as user_id, u.username, u.avatar
       FROM posts p
       JOIN users u ON u.id = p.user_id
@@ -495,7 +497,6 @@ function authMiddleware(req, res, next) {
       isSubscribedToAuthor = !!sub;
     }
 
-    const poll = await getPollForPost(p.id, userId);
     res.json({
       ...p,
       reactions: reactions.reduce((acc, r) => ({ ...acc, [r.type]: r.count }), {}),
@@ -845,7 +846,7 @@ function authMiddleware(req, res, next) {
       await db.run('UPDATE posts SET content = ? WHERE id = $2', content.trim(), postId);
 
       const p = await db.get(`
-        SELECT p.id, p.content, p.image, p.audio, p.video, p.category, p.created_at,
+        SELECT p.id, p.content, p.image, p.audio, p.category, p.created_at,
                u.id as user_id, u.username, u.avatar
         FROM posts p
         JOIN users u ON u.id = p.user_id
@@ -1238,14 +1239,10 @@ function authMiddleware(req, res, next) {
     res.json({ status: 'ok' });
   });
 
-  app.listen(PORT, async () => {
-    const url = `http://localhost:${PORT}`;
-    console.log(`Server running on \x1b[36m\x1b[4m${url}\x1b[0m`);
-    try {
-      const { default: open } = await import('open');
-      await open(url);
-    } catch (e) {
-      // ignore if open fails
-    }
+  // Initialize database
+  db = await initDb();
+  
+  app.listen(PORT, () => {
+    console.log(`Server running on http://localhost:${PORT}`);
   });
 })();

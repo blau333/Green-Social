@@ -31,7 +31,7 @@
   --green-500: #2dd4bf;
   --bg:        #0d1117;
   --bg-card:   #161b22;
-  --bg-input:  #1c2330;
+  --bg-input:  #ffffff;
   --bg-chip:   rgba(28,35,48,0.9);
   --border:    rgba(52,211,153,0.2);
   --border-input: rgba(52,211,153,0.25);
@@ -245,6 +245,12 @@ select#lang-select {
   color: var(--text);
 }
 
+[data-theme="light"] #post-content,
+[data-theme="light"] .post-textarea {
+  background: var(--text);
+  color: var(--bg);
+}
+
 .post-category-row {
   display: flex;
   align-items: center;
@@ -260,6 +266,26 @@ select#lang-select {
   font-size: 13px;
   background: var(--bg-input);
   color: var(--text);
+}
+
+.post-textarea {
+  width: 100%;
+  min-height: 100px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  resize: vertical;
+  font-family: inherit;
+  font-size: 15px;
+  margin-bottom: 10px;
+  background: var(--bg-input);
+  color: var(--text);
+}
+
+[data-theme="light"] #post-content,
+[data-theme="light"] .post-textarea {
+  background: var(--text);
+  color: var(--bg);
 }
 
 .emoji-picker-btn {
@@ -1215,4 +1241,4 @@ button { border-radius: 999px; }
   border: 2px solid rgba(255,255,255,0.7);
   border-top-color: rgba(255,255,255,0.1);
   animation: spin 0.6s linear infinite;
-}*** End Patch"/>
+}
