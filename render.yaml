@@ -1,7 +1,7 @@
 services:
   - type: web
     name: green-social
-    env: node
+    runtime: node
     plan: free
     autoDeploy: true
     buildCommand: npm ci --omit=dev
@@ -12,8 +12,10 @@ services:
         value: production
       - key: DATA_DIR
         value: /var/data
+      - key: UPLOAD_DIR
+        value: /var/data/uploads
       - key: JWT_SECRET
-        generateValue: true
+        sync: false
     disk:
       name: green-social-data
       mountPath: /var/data
