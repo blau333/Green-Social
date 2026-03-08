@@ -267,24 +267,31 @@ async function initDb() {
       FOREIGN KEY(user_id) REFERENCES users(id)
     );
   `);
-  try {
-    await db.run('ALTER TABLE posts ADD COLUMN audio TEXT DEFAULT NULL');
-  } catch (e) { /* column may already exist */ }
-  try {
-    await db.run('ALTER TABLE posts ADD COLUMN category TEXT DEFAULT NULL');
-  } catch (e) { /* column may already exist */ }
-  try {
-    await db.run('ALTER TABLE notifications ADD COLUMN message TEXT DEFAULT NULL');
-  } catch (e) { /* column may already exist */ }
+  async function ensureColumn(table, column, definition) {
+    const columns = await db.all(`PRAGMA table_info(${table})`);
+    const exists = Array.isArray(columns) && columns.some((c) => c && c.name === column);
+    if (exists) return;
+    await db.run(`ALTER TABLE ${table} ADD COLUMN ${definition}`);
+  }
+
+  try { await ensureColumn('users', 'avatar', "avatar TEXT DEFAULT '/default-avatar.png'"); } catch (e) {}
+  try { await ensureColumn('users', 'bio', "bio TEXT DEFAULT ''"); } catch (e) {}
+  try { await ensureColumn('users', 'recovery_token', 'recovery_token TEXT'); } catch (e) {}
+
+  try { await ensureColumn('posts', 'image', 'image TEXT DEFAULT NULL'); } catch (e) {}
+  try { await ensureColumn('posts', 'audio', 'audio TEXT DEFAULT NULL'); } catch (e) {}
+  try { await ensureColumn('posts', 'video', 'video TEXT DEFAULT NULL'); } catch (e) {}
+  try { await ensureColumn('posts', 'category', 'category TEXT DEFAULT NULL'); } catch (e) {}
+
+  try { await ensureColumn('notifications', 'post_id', 'post_id INTEGER DEFAULT NULL'); } catch (e) {}
+  try { await ensureColumn('notifications', 'message', 'message TEXT DEFAULT NULL'); } catch (e) {}
+
+  try { await ensureColumn('messages', 'is_read', 'is_read INTEGER DEFAULT 0'); } catch (e) {}
+  try { await ensureColumn('poll_options', 'sort_order', 'sort_order INTEGER DEFAULT 0'); } catch (e) {}
+
   try {
     await db.run("UPDATE users SET avatar = '/default-avatar.png' WHERE avatar IS NULL OR avatar LIKE 'https://ui-avatars.com/%'");
   } catch (e) { /* ignore */ }
-  try {
-    await db.run('ALTER TABLE users ADD COLUMN recovery_token TEXT');
-  } catch (e) { /* column may already exist */ }
-  try {
-    await db.run('ALTER TABLE poll_options ADD COLUMN sort_order INTEGER DEFAULT 0');
-  } catch (e) { /* column may already exist */ }
   return db;
 }
 
