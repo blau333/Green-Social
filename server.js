@@ -11,8 +11,9 @@ const { open } = require('sqlite');
 const sqlite3 = require('sqlite3').verbose();
 
 const DEFAULT_DATA_DIR = process.env.DATA_DIR || path.join(__dirname, 'data');
-const DB_PATH = process.env.DB_PATH || path.join(DEFAULT_DATA_DIR, 'data.db');
-const uploadDir = process.env.UPLOAD_DIR || path.join(DEFAULT_DATA_DIR, 'uploads');
+let dbPath = process.env.DB_PATH || path.join(DEFAULT_DATA_DIR, 'data.db');
+const hasExplicitUploadDir = Boolean(process.env.UPLOAD_DIR);
+let uploadDir = process.env.UPLOAD_DIR || path.join(DEFAULT_DATA_DIR, 'uploads');
 
 let db;
 
@@ -125,8 +126,34 @@ const uploadStoryMedia = multer({
 }).single('media');
 
 async function initDb() {
-  await fs.mkdir(path.dirname(DB_PATH), { recursive: true });
-  const db = await open({ filename: DB_PATH, driver: sqlite3.Database });
+  const fallbackDataDir = path.join('/tmp', 'green-social');
+  const fallbackDbPath = path.join(fallbackDataDir, 'data.db');
+  let db;
+
+  try {
+    await fs.mkdir(path.dirname(dbPath), { recursive: true });
+    db = await open({ filename: dbPath, driver: sqlite3.Database });
+  } catch (err) {
+    const msg = String(err && (err.message || err));
+    const canFallback =
+      dbPath !== fallbackDbPath &&
+      (err.code === 'SQLITE_CANTOPEN' ||
+        err.code === 'EACCES' ||
+        err.code === 'EPERM' ||
+        msg.includes('SQLITE_CANTOPEN'));
+
+    if (!canFallback) throw err;
+
+    console.warn(`Primary DB path failed (${dbPath}). Falling back to ${fallbackDbPath}.`);
+    dbPath = fallbackDbPath;
+    if (!hasExplicitUploadDir) {
+      uploadDir = path.join(fallbackDataDir, 'uploads');
+    }
+    await fs.mkdir(path.dirname(dbPath), { recursive: true });
+    db = await open({ filename: dbPath, driver: sqlite3.Database });
+  }
+
+  console.log(`Using SQLite database at ${dbPath}`);
   await db.exec(`
     CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT);
     CREATE TABLE IF NOT EXISTS users (
@@ -392,30 +419,6 @@ function authMiddleware(req, res, next) {
         userReactions = await db.all('SELECT type FROM reactions WHERE post_id = ? AND user_id = $2', p.id, userId);
       }
 
-      // Poll info
-      let poll = null;
-      const pollRow = await db.get('SELECT id, question FROM polls WHERE post_id = ?', p.id);
-      if (pollRow) {
-        const options = await db.all(
-          'SELECT o.id, o.text, (SELECT COUNT(*) FROM poll_votes v WHERE v.option_id = o.id) as votes FROM poll_options o WHERE o.poll_id = ?',
-          pollRow.id
-        );
-        let totalVotes = 0;
-        options.forEach(o => { totalVotes += o.votes; });
-        let userVoteOptionId = null;
-        if (userId) {
-          const uv = await db.get('SELECT option_id FROM poll_votes WHERE poll_id = ? AND user_id = $2', pollRow.id, userId);
-          if (uv) userVoteOptionId = uv.option_id;
-        }
-        poll = {
-          id: pollRow.id,
-          question: pollRow.question,
-          options,
-          totalVotes,
-          userVoteOptionId
-        };
-      }
-
       const isSubscribedToAuthor = userId ? subscribedIds.includes(p.user_id) : false;
       results.push({
         ...p,
@@ -485,8 +488,6 @@ function authMiddleware(req, res, next) {
     const comments = await db.get('SELECT COUNT(*) as count FROM comments WHERE post_id = ?', p.id);
     let userReactions = [];
     let isSubscribedToAuthor = false;
-    let poll = null;
-
     if (userId) {
       userReactions = await db.all('SELECT type FROM reactions WHERE post_id = ? AND user_id = $2', p.id, userId);
       const sub = await db.get(
