@@ -1,0 +1,203 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>tap</title>
+  <link rel="stylesheet" href="/styles.css?v=20260427a">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+</head>
+<body>
+  
+  <div class="container">
+    <header>
+      <div class="site-brand">
+        <a href="/" class="site-brand-link" aria-label="Главная">
+          <img src="/tap-logo.png" alt="tap" class="site-brand-image" />
+        </a>
+        <button id="header-news-btn" class="header-news-btn" type="button" aria-label="News">📰</button>
+      </div>
+    </header>
+
+    <main>
+      <section id="feed-page" class="page">
+        <section id="create-post" class="card hidden">
+          <textarea id="post-content" placeholder=""></textarea>
+          <div id="ai-generate-menu" class="ai-generate-menu hidden">
+            <div class="ai-generate-header">
+              <span class="ai-generate-title">AI Assistant</span>
+              <button id="ai-generate-close" type="button" class="ai-generate-close">✕</button>
+            </div>
+            <textarea id="ai-prompt-input" class="ai-prompt-input" placeholder="Опиши что написать..."></textarea>
+            <div class="ai-style-buttons">
+              <button type="button" class="ai-style-btn" data-style="angry" title="Злой">
+                <span class="ai-style-emoji">😡</span>
+                <span class="ai-style-label">Злой</span>
+              </button>
+              <button type="button" class="ai-style-btn" data-style="polite" title="Культурный">
+                <span class="ai-style-emoji">😇</span>
+                <span class="ai-style-label">Культурный</span>
+              </button>
+              <button type="button" class="ai-style-btn active" data-style="unusual" title="Необычно">
+                <span class="ai-style-emoji">👽</span>
+                <span class="ai-style-label">Необычно</span>
+              </button>
+            </div>
+            <button id="ai-generate-btn" type="button" class="ai-generate-btn">Сгенерировать ✨</button>
+          </div>
+          <div class="create-post-actions">
+            <button id="btn-media-toggle" type="button" class="media-toggle-btn" title="">＋</button>
+            <div id="post-media-tools" class="post-media-tools hidden">
+              <input id="post-image" type="file" accept="image/*" multiple style="display:none">
+              <input id="post-audio" type="file" accept="audio/*" style="display:none">
+              <input id="post-video" type="file" accept="video/*" multiple style="display:none">
+              <input id="story-media" type="file" accept="image/*,video/*" style="display:none">
+              <button id="btn-image" title="" type="button" class="media-btn">📷</button>
+              <button id="btn-audio" title="" type="button" class="media-btn">🎵</button>
+              <button id="btn-video" title="" type="button" class="media-btn">🎬</button>
+              <button id="btn-story" title="Create Story" type="button" class="media-btn">📖</button>
+              <button id="btn-voice-record" title="" type="button" class="media-btn">🎤</button>
+              <span id="voice-record-status" class="voice-status hidden"></span>
+            </div>
+            <button id="btn-ai-generate" type="button" class="btn-ai-generate" title="AI Assistant">〽️</button>
+            <button id="btn-post" class="btn-primary" type="button">⬆️</button>
+          </div>
+        </section>
+
+        <section id="site-search-card" class="card site-search-card">
+          <div class="site-search-head">
+            <div>
+              <div id="site-search-title" class="site-search-title"></div>
+              <p id="site-search-caption" class="site-search-caption"></p>
+            </div>
+          </div>
+          <form id="site-search-form" class="site-search-form">
+            <input id="site-search-input" type="search" autocomplete="off" />
+            <button id="site-search-submit" class="btn-primary" type="submit"></button>
+            <button id="site-search-clear" type="button" class="site-search-clear hidden"></button>
+          </form>
+          <div id="site-search-status" class="site-search-status hidden"></div>
+          <section id="site-search-results" class="site-search-results hidden"></section>
+        </section>
+
+        <section id="stories" class="stories-section">
+          <div class="stories-container">
+            <!-- Stories will be rendered here -->
+          </div>
+        </section>
+
+        <section id="posts"></section>
+      </section>
+
+      <section id="news-page" class="page">
+        <section id="create-news" class="card site-search-card hidden">
+          <div class="site-search-head">
+            <div>
+              <div id="site-news-title" class="site-search-title"></div>
+              <p id="site-news-caption" class="site-search-caption"></p>
+            </div>
+          </div>
+          <textarea id="news-content" placeholder=""></textarea>
+          <div class="create-post-actions">
+            <button id="btn-news-post" class="btn-primary" type="button">⬆️</button>
+          </div>
+        </section>
+        <section id="site-news-feed"></section>
+      </section>
+
+      <section id="subscriptions-page" class="page hidden">
+        <section id="subscriptions-posts"></section>
+      </section>
+
+      <section id="tree-page" class="page">
+        <section id="channel-search-card" class="card site-search-card">
+          <div class="site-search-head">
+            <div>
+              <div id="channel-search-title" class="site-search-title"></div>
+              <p id="channel-search-caption" class="site-search-caption"></p>
+            </div>
+          </div>
+          <form id="channel-search-form" class="site-search-form">
+            <input id="channel-search-input" type="search" autocomplete="off" />
+            <button id="channel-search-submit" class="btn-primary" type="submit"></button>
+            <button id="channel-search-clear" type="button" class="site-search-clear hidden"></button>
+          </form>
+          <div id="channel-search-status" class="site-search-status hidden"></div>
+          <section id="channel-search-results" class="site-search-results hidden"></section>
+        </section>
+        <section class="tree-shell">
+          <div class="tree-toolbar card">
+            <div>
+              <div id="tree-page-title" class="tree-page-title"></div>
+              <p id="tree-page-caption" class="tree-page-caption"></p>
+            </div>
+            <button id="tree-add-community" class="tree-add-btn" type="button" aria-label="Create post">➕</button>
+          </div>
+          <section id="tree-create-post" class="card tree-create-post hidden">
+            <textarea id="tree-post-content" placeholder=""></textarea>
+            <div class="tree-create-actions">
+              <button id="tree-submit-post" class="btn-primary" type="button">⬆️</button>
+            </div>
+          </section>
+          <section id="tree-forest" class="tree-forest"></section>
+        </section>
+      </section>
+
+      <section id="chats-page" class="page">
+        <div id="chats-container"></div>
+      </section>
+
+      <section id="notifications-page" class="page">
+        <div id="notifications-container"></div>
+      </section>
+    </main>
+
+    <button id="global-home-btn" class="global-home-btn hidden" type="button"></button>
+    <div id="breadcrumb" class="breadcrumb" aria-label="breadcrumb"></div>
+
+    <nav class="bottom-nav" aria-label="Bottom navigation">
+      <div class="bottom-nav-pill" role="tablist" aria-label="Navigation tabs">
+        <button id="tab-feed" class="bottom-nav-btn active" type="button" role="tab" aria-selected="true"></button>
+        <button id="tab-tree" class="bottom-nav-btn" type="button" role="tab" aria-selected="false"></button>
+        <button id="tab-chats" class="bottom-nav-btn" type="button" role="tab" aria-selected="false"></button>
+        <button id="tab-notifications" class="bottom-nav-btn" type="button" role="tab" aria-selected="false"></button>
+        <div class="settings bottom-nav-settings">
+          <button id="settings-btn" class="settings-btn bottom-nav-utility-btn" type="button" aria-haspopup="menu" aria-expanded="false" title="Settings">⚙️</button>
+          <div id="settings-menu" class="settings-menu hidden" role="menu" aria-label="Settings">
+            <div class="settings-item" role="none">
+              <div class="settings-label" id="settings-language-label">Language</div>
+              <select id="lang-select" aria-label="language-select" aria-labelledby="settings-language-label">
+                <option value="ru">Русский</option>
+                <option value="en">English</option>
+              </select>
+            </div>
+            <div class="settings-item" role="none">
+              <div class="settings-label" id="settings-theme-label">Theme</div>
+              <button id="theme-toggle" type="button" title="" aria-labelledby="settings-theme-label">Dark</button>
+            </div>
+            <div class="settings-item" role="none">
+              <div class="settings-label" id="settings-e2e-label">🔒 End-to-End</div>
+              <button id="e2e-copy-key" type="button" class="e2e-key-btn" title="Copy encryption key">📋</button>
+            </div>
+          </div>
+        </div>
+        <div id="auth-area" class="bottom-nav-auth"></div>
+      </div>
+      <div class="bottom-nav-create-wrap">
+        <div id="nav-create-menu" class="nav-create-menu hidden" role="menu" aria-label="Create menu"></div>
+        <button id="nav-create" class="bottom-nav-create" type="button" aria-label="Create"></button>
+      </div>
+    </nav>
+    <footer class="footer-row">
+      <p id="footer-created"></p>
+      <button id="support-btn" type="button" class="support-btn"></button>
+      <a href="https://t.me/blau030" target="_blank">
+        <img src="telegram.png" alt="Telegram" width="40">
+      </a>
+    </footer>
+  </div>
+  <script src="/app.js?v=20260427a" defer></script>
+</body>
+</html>

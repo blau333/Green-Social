@@ -1,0 +1,354 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Admin panel</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link rel="stylesheet" href="/styles.css">
+  <style>
+    .admin-shell{max-width:1180px;margin:0 auto;padding:18px}
+    .admin-header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:18px}
+    .admin-title{margin:0 0 6px;font-size:32px;font-weight:900}
+    .admin-subtitle{margin:0;color:var(--muted);max-width:70ch;line-height:1.5}
+    .admin-users{display:grid;gap:14px}
+    .admin-user-card{padding:16px;border-radius:24px}
+    .admin-user-head{display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap}
+    .admin-user-main{flex:1;min-width:260px}
+    .admin-user-top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+    .admin-user-name{font-size:22px;font-weight:900;line-height:1.1}
+    .admin-user-meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+    .admin-chip{display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border-radius:999px;background:rgba(34,197,94,0.08);color:#166534;font-size:12px;font-weight:800}
+    .admin-user-bio{margin-top:10px;color:var(--muted);white-space:pre-wrap;word-break:break-word}
+    .admin-user-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+    .admin-btn{border:none;border-radius:14px;padding:10px 14px;font-weight:800;cursor:pointer}
+    .admin-btn-primary{background:#14532d;color:#fff}
+    .admin-btn-secondary{background:rgba(15,23,42,0.08);color:#0f172a}
+    .admin-btn-danger{background:#fee2e2;color:#991b1b}
+    .admin-btn:hover{filter:brightness(0.98)}
+    .admin-badge-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:12px}
+    .admin-badge-input{width:120px;padding:10px 12px;border-radius:12px;border:1px solid rgba(15,23,42,0.12);font-size:16px}
+    .admin-badge-preview{display:inline-flex;align-items:center;justify-content:center;min-width:48px;height:48px;padding:0 12px;border-radius:14px;background:rgba(245,158,11,0.14);font-size:24px;font-weight:900}
+    .admin-posts-toggle{margin-top:16px}
+    .admin-posts{margin-top:14px;display:grid;gap:10px}
+    .admin-post{padding:14px;border-radius:18px;background:rgba(15,23,42,0.04);border:1px solid rgba(15,23,42,0.06)}
+    .admin-post-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:8px}
+    .admin-post-content{font-size:15px;line-height:1.5;white-space:pre-wrap;word-break:break-word}
+    .admin-post-media{margin-top:8px;font-size:13px;color:var(--muted);display:flex;gap:10px;flex-wrap:wrap}
+    .admin-empty-posts{padding:18px;border-radius:18px;background:rgba(15,23,42,0.04);color:var(--muted);text-align:center}
+    .admin-error{color:#b91c1c;margin-top:10px}
+    .admin-modal-backdrop{position:fixed;inset:0;background:rgba(15,23,42,0.54);display:flex;align-items:center;justify-content:center;padding:18px;z-index:1000}
+    .admin-modal-backdrop.hidden{display:none}
+    .admin-modal{width:min(560px,100%);background:var(--card);border-radius:28px;padding:22px;box-shadow:0 30px 80px rgba(15,23,42,0.28)}
+    .admin-modal-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+    .admin-modal-title{margin:0;font-size:24px;font-weight:900}
+    .admin-modal-text{margin:8px 0 0;color:var(--muted);line-height:1.5}
+    .admin-sticker-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(68px,1fr));gap:10px;margin-top:18px}
+    .admin-sticker-btn{display:flex;align-items:center;justify-content:center;height:68px;border:none;border-radius:18px;background:rgba(15,23,42,0.05);font-size:28px;cursor:pointer}
+    .admin-sticker-btn.active{background:#14532d;color:#fff;box-shadow:0 14px 30px rgba(20,83,45,0.24)}
+    .admin-modal-actions{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:18px}
+    .admin-hidden{display:none}
+    @media (max-width: 720px){
+      .admin-shell{padding:12px}
+      .admin-title{font-size:26px}
+      .admin-user-card{padding:14px}
+      .admin-user-name{font-size:20px}
+      .admin-modal{padding:18px}
+    }
+  </style>
+</head>
+<body>
+  <div class="admin-shell">
+    <header class="admin-header">
+      <div>
+        <h1 class="admin-title">tap Admin</h1>
+        <p class="admin-subtitle">
+          Управляйте зарегистрированными пользователями, просматривайте их публикации и назначайте стикер, который будет показываться рядом с никнеймом.
+        </p>
+        <div class="welcome-text" id="admin-welcome"></div>
+        <div id="admin-error" class="admin-error"></div>
+      </div>
+      <div class="header-right">
+        <button type="button" class="admin-btn admin-btn-secondary" onclick="window.location.href='/'">На главную</button>
+      </div>
+    </header>
+
+    <main>
+      <section class="card">
+        <div id="users-list" class="admin-users"></div>
+      </section>
+    </main>
+  </div>
+
+  <div id="sticker-modal" class="admin-modal-backdrop hidden" aria-hidden="true">
+    <div class="admin-modal">
+      <div class="admin-modal-head">
+        <div>
+          <h2 class="admin-modal-title">Выбор стикера</h2>
+          <p id="sticker-modal-text" class="admin-modal-text"></p>
+        </div>
+        <button type="button" class="admin-btn admin-btn-secondary" id="sticker-close-btn">Закрыть</button>
+      </div>
+      <div id="sticker-grid" class="admin-sticker-grid"></div>
+      <div class="admin-modal-actions">
+        <button type="button" class="admin-btn admin-btn-secondary" id="sticker-clear-btn">Убрать стикер</button>
+        <button type="button" class="admin-btn admin-btn-primary" id="sticker-save-btn">Сохранить</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const token = localStorage.getItem('token');
+    const adminWelcomeEl = document.getElementById('admin-welcome');
+    const errorEl = document.getElementById('admin-error');
+    const listEl = document.getElementById('users-list');
+    const modalEl = document.getElementById('sticker-modal');
+    const stickerGridEl = document.getElementById('sticker-grid');
+    const stickerModalTextEl = document.getElementById('sticker-modal-text');
+    const stickerSaveBtn = document.getElementById('sticker-save-btn');
+    const stickerClearBtn = document.getElementById('sticker-clear-btn');
+    const stickerCloseBtn = document.getElementById('sticker-close-btn');
+
+    const STICKERS = ['🔥', '⭐', '💎', '👑', '⚡', '🌿', '🎯', '🚀', '🎵', '🎨', '🧠', '💚', '🦊', '🐉', '🍀', '🛡️'];
+    const state = {
+      users: [],
+      stickerPicker: {
+        userId: null,
+        value: ''
+      }
+    };
+
+    if (!token && adminWelcomeEl) {
+      adminWelcomeEl.textContent = 'Нет токена авторизации. Войдите под администратором blau3.';
+    }
+
+    function escapeHtml(value) {
+      return String(value || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function formatDate(timestamp) {
+      if (!timestamp) return 'Дата неизвестна';
+      try {
+        return new Date(Number(timestamp)).toLocaleString();
+      } catch (_) {
+        return 'Дата неизвестна';
+      }
+    }
+
+    function getPreviewName(user) {
+      const badge = user.badge && String(user.badge).trim() ? ` ${String(user.badge).trim()}` : '';
+      return `${user.username}${badge}`;
+    }
+
+    function countPostMedia(post) {
+      const images = Array.isArray(post.images) ? post.images.length : 0;
+      const videos = Array.isArray(post.videos) ? post.videos.length : 0;
+      const audio = post.audio ? 1 : 0;
+      return images + videos + audio;
+    }
+
+    async function api(path, options = {}) {
+      const headers = options.headers || {};
+      headers['Content-Type'] = 'application/json';
+      headers['Authorization'] = 'Bearer ' + token;
+      const res = await fetch('/api' + path, { ...options, headers });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || res.statusText);
+      return data;
+    }
+
+    function renderStickerGrid() {
+      stickerGridEl.innerHTML = STICKERS.map(sticker => {
+        const activeClass = state.stickerPicker.value === sticker ? ' active' : '';
+        return `<button type="button" class="admin-sticker-btn${activeClass}" data-sticker="${escapeHtml(sticker)}">${escapeHtml(sticker)}</button>`;
+      }).join('');
+    }
+
+    function openStickerModal(userId) {
+      const user = state.users.find(item => Number(item.id) === Number(userId));
+      if (!user) return;
+      state.stickerPicker.userId = Number(userId);
+      state.stickerPicker.value = user.badge || '';
+      stickerModalTextEl.textContent = `Выберите стикер для ${user.username}. Он будет виден рядом с ником пользователя.`;
+      renderStickerGrid();
+      modalEl.classList.remove('hidden');
+      modalEl.setAttribute('aria-hidden', 'false');
+    }
+
+    function closeStickerModal() {
+      modalEl.classList.add('hidden');
+      modalEl.setAttribute('aria-hidden', 'true');
+      state.stickerPicker.userId = null;
+      state.stickerPicker.value = '';
+    }
+
+    async function saveBadge(userId, badge) {
+      await api('/admin/users/' + userId + '/badge', {
+        method: 'PUT',
+        body: JSON.stringify({ badge })
+      });
+    }
+
+    function renderUsers() {
+      if (!state.users.length) {
+        listEl.innerHTML = '<div class="admin-empty-posts">Пользователей пока нет.</div>';
+        return;
+      }
+      listEl.innerHTML = state.users.map(user => {
+        const postsCount = Number(user.posts_count || 0);
+        const postsHtml = postsCount
+          ? user.posts.map(post => {
+              const content = String(post.content || '').trim();
+              const mediaCount = countPostMedia(post);
+              const mediaMeta = [];
+              if (mediaCount) mediaMeta.push(`Медиа: ${mediaCount}`);
+              if (post.views) mediaMeta.push(`Просмотры: ${Number(post.views)}`);
+              if (post.repost_post_id) mediaMeta.push('Репост');
+              return `
+                <article class="admin-post">
+                  <div class="admin-post-head">
+                    <strong>Пост #${Number(post.id)}</strong>
+                    <span class="muted">${escapeHtml(formatDate(post.created_at))}</span>
+                  </div>
+                  <div class="admin-post-content">${escapeHtml(content || 'Пост без текста')}</div>
+                  ${mediaMeta.length ? `<div class="admin-post-media">${mediaMeta.map(item => `<span>${escapeHtml(item)}</span>`).join('')}</div>` : ''}
+                </article>
+              `;
+            }).join('')
+          : '<div class="admin-empty-posts">У этого пользователя пока нет постов.</div>';
+        return `
+          <article class="card admin-user-card">
+            <div class="admin-user-head">
+              <img src="${escapeHtml(user.avatar || '/default-avatar.svg')}" alt="" class="avatar-small">
+              <div class="admin-user-main">
+                <div class="admin-user-top">
+                  <div>
+                    <div class="admin-user-name">${escapeHtml(getPreviewName(user))}</div>
+                    <div class="muted">ID: ${Number(user.id)}</div>
+                  </div>
+                  <div class="admin-badge-preview">${escapeHtml(user.badge || '∅')}</div>
+                </div>
+                <div class="admin-user-meta">
+                  <span class="admin-chip">Постов: ${postsCount}</span>
+                  <span class="admin-chip">Последняя активность: ${escapeHtml(formatDate(user.last_seen))}</span>
+                </div>
+                <div class="admin-user-bio">${escapeHtml(user.bio || 'Без описания')}</div>
+                <div class="admin-badge-row">
+                  <input data-user-id="${Number(user.id)}" class="admin-badge-input" value="${escapeHtml(user.badge || '')}" maxlength="8" placeholder="Стикер">
+                  <button type="button" class="admin-btn admin-btn-primary" data-action="save-badge" data-user-id="${Number(user.id)}">Сохранить</button>
+                  <button type="button" class="admin-btn admin-btn-secondary" data-action="open-sticker" data-user-id="${Number(user.id)}">Выбрать в popup</button>
+                  <button type="button" class="admin-btn admin-btn-danger" data-action="delete-user" data-user-id="${Number(user.id)}">Удалить пользователя</button>
+                </div>
+                <div class="admin-posts-toggle">
+                  <button type="button" class="admin-btn admin-btn-secondary" data-action="toggle-posts" data-user-id="${Number(user.id)}">Показать посты</button>
+                </div>
+              </div>
+            </div>
+            <div class="admin-posts admin-hidden" id="user-posts-${Number(user.id)}">${postsHtml}</div>
+          </article>
+        `;
+      }).join('');
+    }
+
+    async function loadUsers() {
+      try {
+        errorEl.textContent = '';
+        listEl.innerHTML = '<div class="admin-empty-posts">Загрузка пользователей...</div>';
+        const users = await api('/admin/users');
+        state.users = Array.isArray(users) ? users : [];
+        if (adminWelcomeEl) {
+          adminWelcomeEl.textContent = `Всего пользователей: ${state.users.length}`;
+        }
+        renderUsers();
+      } catch (e) {
+        errorEl.textContent = e.message || 'Ошибка загрузки';
+        listEl.innerHTML = '';
+      }
+    }
+
+    listEl.addEventListener('click', async (event) => {
+      const target = event.target.closest('[data-action]');
+      if (!target) return;
+      const action = target.getAttribute('data-action');
+      const userId = Number(target.getAttribute('data-user-id'));
+      if (!userId) return;
+
+      if (action === 'toggle-posts') {
+        const postsEl = document.getElementById('user-posts-' + userId);
+        if (!postsEl) return;
+        const isHidden = postsEl.classList.toggle('admin-hidden');
+        target.textContent = isHidden ? 'Показать посты' : 'Скрыть посты';
+        return;
+      }
+
+      if (action === 'open-sticker') {
+        openStickerModal(userId);
+        return;
+      }
+
+      if (action === 'save-badge') {
+        const input = document.querySelector('.admin-badge-input[data-user-id="' + userId + '"]');
+        const badge = input ? String(input.value || '').trim() : '';
+        try {
+          errorEl.textContent = '';
+          await saveBadge(userId, badge);
+          await loadUsers();
+        } catch (err) {
+          errorEl.textContent = err.message || 'Ошибка сохранения стикера';
+        }
+        return;
+      }
+
+      if (action === 'delete-user') {
+        if (!confirm('Удалить пользователя и все его данные?')) return;
+        try {
+          errorEl.textContent = '';
+          await api('/admin/users/' + userId, { method: 'DELETE' });
+          await loadUsers();
+        } catch (err) {
+          errorEl.textContent = err.message || 'Ошибка удаления пользователя';
+        }
+      }
+    });
+
+    stickerGridEl.addEventListener('click', (event) => {
+      const btn = event.target.closest('[data-sticker]');
+      if (!btn) return;
+      state.stickerPicker.value = btn.getAttribute('data-sticker') || '';
+      renderStickerGrid();
+    });
+
+    stickerClearBtn.addEventListener('click', () => {
+      state.stickerPicker.value = '';
+      renderStickerGrid();
+    });
+
+    stickerCloseBtn.addEventListener('click', closeStickerModal);
+
+    modalEl.addEventListener('click', (event) => {
+      if (event.target === modalEl) closeStickerModal();
+    });
+
+    stickerSaveBtn.addEventListener('click', async () => {
+      if (!state.stickerPicker.userId) return;
+      try {
+        errorEl.textContent = '';
+        await saveBadge(state.stickerPicker.userId, state.stickerPicker.value);
+        closeStickerModal();
+        await loadUsers();
+      } catch (err) {
+        errorEl.textContent = err.message || 'Ошибка сохранения стикера';
+      }
+    });
+
+    if (token) {
+      renderStickerGrid();
+      loadUsers();
+    }
+  </script>
+</body>
+</html>

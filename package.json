@@ -1,0 +1,32 @@
+{
+  "name": "green-social",
+  "version": "0.1.0",
+  "description": "Minimal green-themed social app (posts, reactions, comments, auth)",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node tests/support.test.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "compression": "^1.8.1",
+    "express": "^4.22.1",
+    "helmet": "^7.0.0",
+    "jsonwebtoken": "^9.0.0",
+    "multer": "^2.1.1",
+    "nodemailer": "^6.9.16",
+    "sql.js": "^1.14.1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/blau333/Green-Social.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/blau333/Green-Social/issues"
+  },
+  "homepage": "https://github.com/blau333/Green-Social#readme"
+}
