@@ -51,6 +51,7 @@ function isAdmin(req, res, next) {
 // --- Админ-панель ---
 app.get('/admin', isAdmin, (req, res) => {
   let html = `
+<<<<<<< HEAD
     <style>
       body { font-family: Arial, sans-serif; padding: 20px; }
       button { margin-left: 10px; }
@@ -122,6 +123,8 @@ app.get('/admin', isAdmin, (req, res) => {
         transform: scaleX(0);
       }
     </style>
+=======
+>>>>>>> 43fc63577f740ec07265f99ac0d4769620c4ae8c
     <h1>Админ-панель</h1>
     <p>Вы вошли как: ${req.session.user.username}</p>
     <ul>
@@ -134,6 +137,7 @@ app.get('/admin', isAdmin, (req, res) => {
     </ul>
 
     <script>
+<<<<<<< HEAD
       function ensureToastContainer() {
         let container = document.getElementById('toast-container');
         if (container) return container;
@@ -183,6 +187,77 @@ app.get('/admin', isAdmin, (req, res) => {
         const res = await fetch('/api/posts/' + id, { method: 'DELETE' });
         if(res.ok) location.reload();
         else showToast('Ошибка при удалении');
+=======
+      function showAdminConfirm(message) {
+        return new Promise(resolve => {
+          const root = document.createElement('div');
+          root.style.position = 'fixed';
+          root.style.inset = '0';
+          root.style.background = 'rgba(0,0,0,0.4)';
+          root.style.display = 'flex';
+          root.style.alignItems = 'center';
+          root.style.justifyContent = 'center';
+          root.style.zIndex = '9999';
+          const card = document.createElement('div');
+          card.style.background = '#fff';
+          card.style.borderRadius = '18px';
+          card.style.padding = '16px';
+          card.style.minWidth = '260px';
+          card.style.boxShadow = '0 10px 30px rgba(0,0,0,0.2)';
+          card.innerHTML = '<h3 style="margin-top:0">Подтверждение</h3><p>' + message + '</p>';
+          const actions = document.createElement('div');
+          actions.style.display = 'flex';
+          actions.style.justifyContent = 'flex-end';
+          actions.style.gap = '8px';
+          const cancelBtn = document.createElement('button');
+          cancelBtn.textContent = 'Отмена';
+          const okBtn = document.createElement('button');
+          okBtn.textContent = 'Удалить';
+          okBtn.style.background = '#c0392b';
+          okBtn.style.color = '#fff';
+          okBtn.style.border = 'none';
+          okBtn.style.padding = '6px 12px';
+          okBtn.style.borderRadius = '4px';
+          actions.appendChild(cancelBtn);
+          actions.appendChild(okBtn);
+          card.appendChild(actions);
+          root.appendChild(card);
+          document.body.appendChild(root);
+          cancelBtn.onclick = () => { document.body.removeChild(root); resolve(false); };
+          okBtn.onclick = () => { document.body.removeChild(root); resolve(true); };
+        });
+      }
+      function showAdminAlert(message) {
+        const root = document.createElement('div');
+        root.style.position = 'fixed';
+        root.style.inset = '0';
+        root.style.background = 'rgba(0,0,0,0.4)';
+        root.style.display = 'flex';
+        root.style.alignItems = 'center';
+        root.style.justifyContent = 'center';
+        root.style.zIndex = '9999';
+        const card = document.createElement('div');
+        card.style.background = '#fff';
+        card.style.borderRadius = '18px';
+        card.style.padding = '16px';
+        card.style.minWidth = '260px';
+        card.style.boxShadow = '0 10px 30px rgba(0,0,0,0.2)';
+        card.innerHTML = '<p style="margin-top:0">' + message + '</p>';
+        const btn = document.createElement('button');
+        btn.textContent = 'OK';
+        btn.style.marginTop = '12px';
+        btn.onclick = () => document.body.removeChild(root);
+        card.appendChild(btn);
+        root.appendChild(card);
+        document.body.appendChild(root);
+      }
+      async function deletePost(id) {
+        const confirmed = await showAdminConfirm('Удалить этот пост?');
+        if(!confirmed) return;
+        const res = await fetch('/api/posts/' + id, { method: 'DELETE' });
+        if(res.ok) location.reload();
+        else showAdminAlert('Ошибка при удалении');
+>>>>>>> 43fc63577f740ec07265f99ac0d4769620c4ae8c
       }
     </script>
   `;
@@ -199,4 +274,8 @@ app.delete('/api/posts/:id', isAdmin, (req, res) => {
 // --- Запуск сервера ---
 app.listen(PORT, () => {
   console.log(`Сервер запущен на http://localhost:${PORT}`);
+<<<<<<< HEAD
 });
+=======
+});
+>>>>>>> 43fc63577f740ec07265f99ac0d4769620c4ae8c

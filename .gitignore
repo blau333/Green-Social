@@ -1,6 +1,14 @@
 node_modules/
 uploads/
+<<<<<<< HEAD
+=======
+data/
+>>>>>>> 43fc63577f740ec07265f99ac0d4769620c4ae8c
 data.db
 *.log
 .env
 .DS_Store
+<<<<<<< HEAD
+=======
+nul
+>>>>>>> 43fc63577f740ec07265f99ac0d4769620c4ae8c

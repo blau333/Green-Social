@@ -3,6 +3,7 @@ const helmet = require('helmet');
 const compression = require('compression');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+<<<<<<< HEAD
 const initSqlJs = require('sql.js');
 const path = require('path');
 const multer = require('multer');
@@ -49,12 +50,46 @@ const ACCESS_REQUEST_STATUS_APPROVED = 'approved';
 const ACCESS_REQUEST_STATUS_REJECTED = 'rejected';
 const ACCESS_REQUEST_TYPE_VIEW = 'view';
 const ACCESS_REQUEST_TYPE_SUBSCRIBE = 'subscribe';
+=======
+const path = require('path');
+const multer = require('multer');
+const fs = require('fs').promises;
+const crypto = require('crypto');
+const { open } = require('sqlite');
+const sqlite3 = require('sqlite3').verbose();
+
+const DEFAULT_DATA_DIR = process.env.DATA_DIR || path.join(__dirname, 'data');
+let dbPath = process.env.DB_PATH || path.join(DEFAULT_DATA_DIR, 'data.db');
+const hasExplicitUploadDir = Boolean(process.env.UPLOAD_DIR);
+let uploadDir = process.env.UPLOAD_DIR || path.join(DEFAULT_DATA_DIR, 'uploads');
+
+let db;
+
+const JWT_SECRET =
+  process.env.JWT_SECRET ||
+  (process.env.NODE_ENV === 'production' ? null : 'dev-secret-change-me');
+const PORT = process.env.PORT || 3000;
+
+if (!JWT_SECRET) {
+  throw new Error('JWT_SECRET must be set in production');
+}
+>>>>>>> 43fc63577f740ec07265f99ac0d4769620c4ae8c
 
 // Multer configuration for file uploads
 const storage = multer.diskStorage({
   destination: async (req, file, cb) => {
+<<<<<<< HEAD
     await fs.mkdir(uploadDir, { recursive: true });
     cb(null, uploadDir);
+=======
+    try {
+      await fs.mkdir(uploadDir, { recursive: true });
+      cb(null, uploadDir);
+    } catch (err) {
+      console.error('Error creating upload dir:', err);
+      cb(err, uploadDir);
+    }
+>>>>>>> 43fc63577f740ec07265f99ac0d4769620c4ae8c
   },
   filename: (req, file, cb) => {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
@@ -63,6 +98,7 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage: storage, limits: { fileSize: 5 * 1024 * 1024 } });
 
+<<<<<<< HEAD
 const backgroundStorage = multer.diskStorage({
   destination: async (req, file, cb) => {
     await fs.mkdir(uploadDir, { recursive: true });
@@ -82,6 +118,8 @@ const uploadBackground = multer({
   }
 });
 
+=======
+>>>>>>> 43fc63577f740ec07265f99ac0d4769620c4ae8c
 const postImageStorage = multer.diskStorage({
   destination: async (req, file, cb) => {
     await fs.mkdir(uploadDir, { recursive: true });
@@ -94,16 +132,26 @@ const postImageStorage = multer.diskStorage({
 });
 const uploadPostImage = multer({ storage: postImageStorage, limits: { fileSize: 10 * 1024 * 1024 } });
 
+<<<<<<< HEAD
 let postMediaFileCounter = 0;
+=======
+>>>>>>> 43fc63577f740ec07265f99ac0d4769620c4ae8c
 const postMediaStorage = multer.diskStorage({
   destination: async (req, file, cb) => {
     await fs.mkdir(uploadDir, { recursive: true });
     cb(null, uploadDir);
   },
   filename: (req, file, cb) => {
+<<<<<<< HEAD
     const prefix = file.fieldname === 'audio' ? 'audio-' : 'post-';
     postMediaFileCounter = (postMediaFileCounter + 1) % 1e9;
     const uniqueSuffix = Date.now() + '-' + postMediaFileCounter + '-' + Math.round(Math.random() * 1E9);
+=======
+    let prefix = 'post-';
+    if (file.fieldname === 'audio') prefix = 'audio-';
+    if (file.fieldname === 'video') prefix = 'video-';
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+>>>>>>> 43fc63577f740ec07265f99ac0d4769620c4ae8c
     cb(null, prefix + uniqueSuffix + path.extname(file.originalname));
   }
 });
@@ -116,6 +164,7 @@ const uploadPostMedia = multer({
     if (file.fieldname === 'video' && !file.mimetype.startsWith('video/')) return cb(new Error('Only video files allowed'));
     cb(null, true);
   }
+<<<<<<< HEAD
 }).fields([{ name: 'image', maxCount: 20 }, { name: 'audio', maxCount: 1 }, { name: 'video', maxCount: 20 }]);
 
 let touchUserPresence = async () => {};
@@ -877,10 +926,91 @@ async function initDb() {
   };
 
   await db.exec(`
+=======
+}).fields([
+  { name: 'image', maxCount: 1 },
+  { name: 'audio', maxCount: 1 },
+  { name: 'video', maxCount: 1 }
+]);
+
+const logoStorage = multer.diskStorage({
+  destination: async (req, file, cb) => {
+    await fs.mkdir(uploadDir, { recursive: true });
+    cb(null, uploadDir);
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname) || '.png';
+    cb(null, 'site-logo' + ext);
+  }
+});
+const uploadLogo = multer({
+  storage: logoStorage,
+  limits: { fileSize: 2 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    if (!file.mimetype.startsWith('image/')) return cb(new Error('Only images allowed'));
+    cb(null, true);
+  }
+}).single('logo');
+
+const storyMediaStorage = multer.diskStorage({
+  destination: async (req, file, cb) => {
+    await fs.mkdir(uploadDir, { recursive: true });
+    cb(null, uploadDir);
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, 'story-' + uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
+const uploadStoryMedia = multer({
+  storage: storyMediaStorage,
+  limits: { fileSize: 20 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    if (!file.mimetype.startsWith('audio/')) {
+      return cb(new Error('Only audio allowed for stories'));
+    }
+    cb(null, true);
+  }
+}).single('media');
+
+async function initDb() {
+  const fallbackDataDir = path.join('/tmp', 'green-social');
+  const fallbackDbPath = path.join(fallbackDataDir, 'data.db');
+  let db;
+
+  try {
+    await fs.mkdir(path.dirname(dbPath), { recursive: true });
+    db = await open({ filename: dbPath, driver: sqlite3.Database });
+  } catch (err) {
+    const msg = String(err && (err.message || err));
+    const canFallback =
+      dbPath !== fallbackDbPath &&
+      (err.code === 'SQLITE_CANTOPEN' ||
+        err.code === 'EACCES' ||
+        err.code === 'EPERM' ||
+        msg.includes('SQLITE_CANTOPEN'));
+
+    if (!canFallback) throw err;
+
+    console.warn(`Primary DB path failed (${dbPath}). Falling back to ${fallbackDbPath}.`);
+    dbPath = fallbackDbPath;
+    if (!hasExplicitUploadDir) {
+      uploadDir = path.join(fallbackDataDir, 'uploads');
+    }
+    await fs.mkdir(path.dirname(dbPath), { recursive: true });
+    db = await open({ filename: dbPath, driver: sqlite3.Database });
+  }
+
+  console.log(`Using SQLite database at ${dbPath}`);
+  await db.exec(`
+    CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT);
+>>>>>>> 43fc63577f740ec07265f99ac0d4769620c4ae8c
     CREATE TABLE IF NOT EXISTS users (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       username TEXT UNIQUE,
       password_hash TEXT,
+<<<<<<< HEAD
       avatar TEXT DEFAULT '${DEFAULT_AVATAR_URL}',
       bio TEXT DEFAULT '',
       background TEXT DEFAULT NULL,
@@ -888,6 +1018,11 @@ async function initDb() {
       recovery_code TEXT DEFAULT NULL,
       last_seen INTEGER DEFAULT 0,
       is_private INTEGER DEFAULT 0
+=======
+      recovery_token TEXT,
+      avatar TEXT DEFAULT '/default-avatar.png',
+      bio TEXT DEFAULT ''
+>>>>>>> 43fc63577f740ec07265f99ac0d4769620c4ae8c
     );
     CREATE TABLE IF NOT EXISTS posts (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -895,6 +1030,7 @@ async function initDb() {
       content TEXT,
       image TEXT DEFAULT NULL,
       audio TEXT DEFAULT NULL,
+<<<<<<< HEAD
       video TEXT DEFAULT NULL,
       channel_id INTEGER DEFAULT NULL,
       repost_post_id INTEGER DEFAULT NULL,
@@ -909,6 +1045,10 @@ async function initDb() {
       user_id INTEGER NOT NULL,
       name TEXT NOT NULL,
       created_at INTEGER NOT NULL,
+=======
+      category TEXT DEFAULT NULL,
+      created_at INTEGER,
+>>>>>>> 43fc63577f740ec07265f99ac0d4769620c4ae8c
       FOREIGN KEY(user_id) REFERENCES users(id)
     );
     CREATE TABLE IF NOT EXISTS reactions (
@@ -929,6 +1069,18 @@ async function initDb() {
       FOREIGN KEY(post_id) REFERENCES posts(id),
       FOREIGN KEY(user_id) REFERENCES users(id)
     );
+<<<<<<< HEAD
+=======
+    CREATE TABLE IF NOT EXISTS comment_likes (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      comment_id INTEGER,
+      user_id INTEGER,
+      created_at INTEGER,
+      UNIQUE(comment_id, user_id),
+      FOREIGN KEY(comment_id) REFERENCES comments(id),
+      FOREIGN KEY(user_id) REFERENCES users(id)
+    );
+>>>>>>> 43fc63577f740ec07265f99ac0d4769620c4ae8c
     CREATE TABLE IF NOT EXISTS subscriptions (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       subscriber_id INTEGER,
@@ -944,7 +1096,11 @@ async function initDb() {
       type TEXT,
       from_user_id INTEGER,
       post_id INTEGER DEFAULT NULL,
+<<<<<<< HEAD
       request_id INTEGER DEFAULT NULL,
+=======
+      message TEXT DEFAULT NULL,
+>>>>>>> 43fc63577f740ec07265f99ac0d4769620c4ae8c
       is_read INTEGER DEFAULT 0,
       created_at INTEGER,
       FOREIGN KEY(user_id) REFERENCES users(id),
@@ -961,6 +1117,7 @@ async function initDb() {
       FOREIGN KEY(from_user_id) REFERENCES users(id),
       FOREIGN KEY(to_user_id) REFERENCES users(id)
     );
+<<<<<<< HEAD
     CREATE TABLE IF NOT EXISTS message_reactions (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       message_id INTEGER NOT NULL,
@@ -1120,6 +1277,76 @@ async function initDb() {
 }
 
 async function authMiddleware(req, res, next) {
+=======
+    CREATE TABLE IF NOT EXISTS stories (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER,
+      content TEXT,
+      media TEXT,
+      created_at INTEGER,
+      expires_at INTEGER,
+      FOREIGN KEY(user_id) REFERENCES users(id)
+    );
+    CREATE TABLE IF NOT EXISTS polls (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      post_id INTEGER UNIQUE,
+      question TEXT NOT NULL,
+      created_at INTEGER,
+      FOREIGN KEY(post_id) REFERENCES posts(id)
+    );
+    CREATE TABLE IF NOT EXISTS poll_options (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      poll_id INTEGER,
+      text TEXT NOT NULL,
+      sort_order INTEGER DEFAULT 0,
+      FOREIGN KEY(poll_id) REFERENCES polls(id)
+    );
+    CREATE TABLE IF NOT EXISTS poll_votes (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      poll_id INTEGER,
+      option_id INTEGER,
+      user_id INTEGER,
+      UNIQUE(poll_id, user_id),
+      FOREIGN KEY(poll_id) REFERENCES polls(id),
+      FOREIGN KEY(option_id) REFERENCES poll_options(id),
+      FOREIGN KEY(user_id) REFERENCES users(id)
+    );
+  `);
+  async function ensureColumn(table, column, definition) {
+    const columns = await db.all(`PRAGMA table_info(${table})`);
+    const exists = Array.isArray(columns) && columns.some((c) => c && c.name === column);
+    if (exists) return;
+    await db.run(`ALTER TABLE ${table} ADD COLUMN ${definition}`);
+  }
+
+  try { await ensureColumn('users', 'avatar', "avatar TEXT DEFAULT '/default-avatar.png'"); } catch (e) {}
+  try { await ensureColumn('users', 'bio', "bio TEXT DEFAULT ''"); } catch (e) {}
+  try { await ensureColumn('users', 'recovery_token', 'recovery_token TEXT'); } catch (e) {}
+
+  try { await ensureColumn('posts', 'image', 'image TEXT DEFAULT NULL'); } catch (e) {}
+  try { await ensureColumn('posts', 'audio', 'audio TEXT DEFAULT NULL'); } catch (e) {}
+  try { await ensureColumn('posts', 'video', 'video TEXT DEFAULT NULL'); } catch (e) {}
+  try { await ensureColumn('posts', 'category', 'category TEXT DEFAULT NULL'); } catch (e) {}
+
+  try { await ensureColumn('notifications', 'post_id', 'post_id INTEGER DEFAULT NULL'); } catch (e) {}
+  try { await ensureColumn('notifications', 'message', 'message TEXT DEFAULT NULL'); } catch (e) {}
+
+  try { await ensureColumn('messages', 'is_read', 'is_read INTEGER DEFAULT 0'); } catch (e) {}
+  try { await ensureColumn('poll_options', 'sort_order', 'sort_order INTEGER DEFAULT 0'); } catch (e) {}
+
+  try {
+    await db.run("UPDATE users SET avatar = '/default-avatar.png' WHERE avatar IS NULL OR avatar LIKE 'https://ui-avatars.com/%'");
+  } catch (e) { /* ignore */ }
+  return db;
+}
+
+function uploadPathFromUrl(urlPath) {
+  if (!urlPath) return null;
+  return path.join(uploadDir, path.basename(urlPath));
+}
+
+function authMiddleware(req, res, next) {
+>>>>>>> 43fc63577f740ec07265f99ac0d4769620c4ae8c
   const auth = req.headers.authorization;
   if (!auth) return res.status(401).json({ error: 'Missing auth' });
   const parts = auth.split(' ');
@@ -1127,13 +1354,17 @@ async function authMiddleware(req, res, next) {
   try {
     const payload = jwt.verify(parts[1], JWT_SECRET);
     req.user = payload;
+<<<<<<< HEAD
     await touchUserPresence(payload.id);
+=======
+>>>>>>> 43fc63577f740ec07265f99ac0d4769620c4ae8c
     next();
   } catch (err) {
     return res.status(401).json({ error: 'Invalid token' });
   }
 }
 
+<<<<<<< HEAD
 function adminMiddleware(req, res, next) {
   if (req.user && req.user.username === 'blau3') return next();
   return res.status(403).json({ error: 'admin_only' });
@@ -1189,6 +1420,30 @@ function adminMiddleware(req, res, next) {
     const row = await db.get('SELECT id FROM users WHERE LOWER(username) = LOWER(?)', String(username || '').trim());
     return row && row.id ? Number(row.id) : null;
   }
+=======
+(async () => {
+  const app = express();
+  app.set('trust proxy', 1);
+  app.use(helmet());
+  app.use(compression());
+  app.use(express.json());
+  app.use(express.urlencoded({ extended: true }));
+  app.use(express.static(path.join(__dirname, 'public'), {
+    maxAge: '1d',
+    setHeaders: (res, path) => {
+      if (path.endsWith('.html')) {
+        res.setHeader('Cache-Control', 'no-cache');
+        return;
+      }
+      if (path.endsWith('.js') || path.endsWith('.css')) {
+        res.setHeader('Cache-Control', 'no-cache');
+      }
+    }
+  }));
+  app.use('/uploads', express.static(uploadDir, {
+    maxAge: '7d'
+  }));
+>>>>>>> 43fc63577f740ec07265f99ac0d4769620c4ae8c
 
   function validatePassword(p) {
     if (p.length < 8) return { ok: false, error: 'password_min_length' };
@@ -1199,6 +1454,7 @@ function adminMiddleware(req, res, next) {
     return { ok: true };
   }
 
+<<<<<<< HEAD
   function generateRecoveryCode() {
     const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
     let code = '';
@@ -1208,6 +1464,10 @@ function adminMiddleware(req, res, next) {
       if ((i + 1) % 4 === 0 && i !== 15) code += '-';
     }
     return code;
+=======
+  function generateRecoveryToken() {
+    return crypto.randomBytes(16).toString('hex');
+>>>>>>> 43fc63577f740ec07265f99ac0d4769620c4ae8c
   }
 
   app.post('/api/register', async (req, res) => {
@@ -1219,6 +1479,7 @@ function adminMiddleware(req, res, next) {
     if (existing) return res.status(400).json({ error: 'username_taken' });
     const hash = await bcrypt.hash(password, 10);
     const name = username.trim();
+<<<<<<< HEAD
     const recoveryCode = generateRecoveryCode();
     try {
       const now = Date.now();
@@ -1234,11 +1495,25 @@ function adminMiddleware(req, res, next) {
       const token = jwt.sign({ id, username: name }, JWT_SECRET);
       const user = await db.get('SELECT id, username, avatar, bio, background, badge, is_private FROM users WHERE id = ?', id);
       res.json({ token, recoveryCode, ...user });
+=======
+    const recoveryToken = generateRecoveryToken();
+    try {
+      const result = await db.run(
+        'INSERT INTO users (username, password_hash, recovery_token) VALUES (?, ?, ?)',
+        name,
+        hash,
+        recoveryToken
+      );
+      const id = result.lastID;
+      const token = jwt.sign({ id, username: name }, JWT_SECRET);
+      res.json({ token, username: name, id, recoveryToken });
+>>>>>>> 43fc63577f740ec07265f99ac0d4769620c4ae8c
     } catch (err) {
       res.status(400).json({ error: 'username_taken' });
     }
   });
 
+<<<<<<< HEAD
   app.post('/api/recover', async (req, res) => {
     const { username, code, password } = req.body || {};
     if (!username || !code || !password) {
@@ -1256,6 +1531,28 @@ function adminMiddleware(req, res, next) {
     const fresh = await db.get('SELECT id, username, avatar, bio, background, badge, is_private FROM users WHERE id = ?', user.id);
     const token = jwt.sign({ id: fresh.id, username: fresh.username }, JWT_SECRET);
     res.json({ token, ...fresh });
+=======
+  app.post('/api/password-reset', async (req, res) => {
+    try {
+      const { username, recoveryToken, newPassword } = req.body || {};
+      if (!username || !recoveryToken || !newPassword) {
+        return res.status(400).json({ error: 'missing_fields' });
+      }
+      const user = await db.get('SELECT id, recovery_token FROM users WHERE LOWER(username) = LOWER(?)', username.trim());
+      if (!user || !user.recovery_token || user.recovery_token !== recoveryToken) {
+        return res.status(400).json({ error: 'invalid_recovery' });
+      }
+      const pwCheck = validatePassword(newPassword);
+      if (!pwCheck.ok) return res.status(400).json({ error: pwCheck.error });
+      const hash = await bcrypt.hash(newPassword, 10);
+      const newToken = generateRecoveryToken();
+      await db.run('UPDATE users SET password_hash = ?, recovery_token = $2 WHERE id = $3', hash, newToken, user.id);
+      res.json({ success: true, recoveryToken: newToken });
+    } catch (err) {
+      console.error('Error in POST /api/password-reset:', err);
+      res.status(500).json({ error: err.message });
+    }
+>>>>>>> 43fc63577f740ec07265f99ac0d4769620c4ae8c
   });
 
   app.post('/api/login', async (req, res) => {
@@ -1265,6 +1562,7 @@ function adminMiddleware(req, res, next) {
     if (!user) return res.status(400).json({ error: 'invalid credentials' });
     const ok = await bcrypt.compare(password, user.password_hash);
     if (!ok) return res.status(400).json({ error: 'invalid credentials' });
+<<<<<<< HEAD
     await touchUserPresence(user.id);
     const token = jwt.sign({ id: user.id, username: user.username }, JWT_SECRET);
     res.json({ token, username: user.username, id: user.id, avatar: user.avatar, bio: user.bio, background: user.background, badge: user.badge, is_private: user.is_private });
@@ -1285,10 +1583,51 @@ function adminMiddleware(req, res, next) {
     `);
     const posts = await filterVisiblePostRows(db, rows, userId);
     res.json(await buildRecommendedFeed(db, posts, userId));
+=======
+    const token = jwt.sign({ id: user.id, username: user.username }, JWT_SECRET);
+    res.json({ token, username: user.username, id: user.id, avatar: user.avatar, bio: user.bio });
+  });
+
+  app.get('/api/posts', authMiddleware, async (req, res) => {
+    const userId = req.user.id;
+    let subscribedIds = [];
+    if (userId) {
+      const rows = await db.all('SELECT subscribed_to_id FROM subscriptions WHERE subscriber_id = ?', userId);
+      subscribedIds = rows.map(r => r.subscribed_to_id);
+    }
+    const posts = await db.all(`
+      SELECT p.id, p.content, p.image, p.audio, p.category, p.created_at, u.id as user_id, u.username, u.avatar
+      FROM posts p
+      JOIN users u ON u.id = p.user_id
+      ORDER BY p.created_at DESC
+    `);
+    const results = [];
+    for (const p of posts) {
+      const reactions = await db.all('SELECT type, COUNT(*) as count FROM reactions WHERE post_id = ? GROUP BY type', p.id);
+      const comments = await db.get('SELECT COUNT(*) as count FROM comments WHERE post_id = ?', p.id);
+      let userReactions = [];
+      if (userId) {
+        userReactions = await db.all('SELECT type FROM reactions WHERE post_id = ? AND user_id = $2', p.id, userId);
+      }
+
+      const isSubscribedToAuthor = userId ? subscribedIds.includes(p.user_id) : false;
+      const poll = await getPollForPost(p.id, userId);
+      results.push({
+        ...p,
+        reactions: reactions.reduce((acc, r) => ({ ...acc, [r.type]: r.count }), {}),
+        userReactions: userReactions.map(r => r.type),
+        comments: comments.count,
+        isSubscribedToAuthor,
+        poll
+      });
+    }
+    res.json(results);
+>>>>>>> 43fc63577f740ec07265f99ac0d4769620c4ae8c
   });
 
   app.get('/api/posts/subscriptions', authMiddleware, async (req, res) => {
     const userId = req.user.id;
+<<<<<<< HEAD
     const rows = await db.all(`
       SELECT ${POST_SELECT_FIELDS}
       FROM posts p
@@ -1869,6 +2208,138 @@ function adminMiddleware(req, res, next) {
       await notifySubscribersAboutPost(db, req.user.id, result.lastID, created_at);
       const post = await getPostRowById(db, result.lastID);
       res.json(mapPostRow(post));
+=======
+    const posts = await db.all(`
+      SELECT p.id, p.content, p.image, p.audio, p.category, p.created_at, u.id as user_id, u.username, u.avatar
+      FROM posts p
+      JOIN users u ON u.id = p.user_id
+      WHERE p.user_id IN (SELECT subscribed_to_id FROM subscriptions WHERE subscriber_id = ?)
+      ORDER BY p.created_at DESC
+    `, userId);
+    const results = [];
+    for (const p of posts) {
+      const reactions = await db.all('SELECT type, COUNT(*) as count FROM reactions WHERE post_id = ? GROUP BY type', p.id);
+      const comments = await db.get('SELECT COUNT(*) as count FROM comments WHERE post_id = ?', p.id);
+      const userReactions = await db.all('SELECT type FROM reactions WHERE post_id = ? AND user_id = ?', p.id, userId);
+      const poll = null;
+      results.push({
+        ...p,
+        reactions: reactions.reduce((acc, r) => ({ ...acc, [r.type]: r.count }), {}),
+        userReactions: userReactions.map(r => r.type),
+        comments: comments.count,
+        isSubscribedToAuthor: true,
+        poll
+      });
+    }
+    res.json(results);
+  });
+
+  app.get('/api/posts/:id/full', async (req, res) => {
+    const postId = parseInt(req.params.id, 10);
+    if (!postId) return res.status(400).json({ error: 'invalid id' });
+
+    const auth = req.headers.authorization;
+    let userId = null;
+    if (auth) {
+      const parts = auth.split(' ');
+      if (parts.length === 2 && parts[0] === 'Bearer') {
+        try {
+          const payload = jwt.verify(parts[1], JWT_SECRET);
+          userId = payload.id;
+        } catch (err) {}
+      }
+    }
+
+    const p = await db.get(`
+      SELECT p.id, p.content, p.image, p.audio, p.category, p.created_at,
+             u.id as user_id, u.username, u.avatar
+      FROM posts p
+      JOIN users u ON u.id = p.user_id
+      WHERE p.id = ?
+    `, postId);
+    if (!p) return res.status(404).json({ error: 'post not found' });
+
+    const reactions = await db.all('SELECT type, COUNT(*) as count FROM reactions WHERE post_id = ? GROUP BY type', p.id);
+    const comments = await db.get('SELECT COUNT(*) as count FROM comments WHERE post_id = ?', p.id);
+    let userReactions = [];
+    let isSubscribedToAuthor = false;
+    if (userId) {
+      userReactions = await db.all('SELECT type FROM reactions WHERE post_id = ? AND user_id = $2', p.id, userId);
+      const sub = await db.get(
+        'SELECT 1 FROM subscriptions WHERE subscriber_id = ? AND subscribed_to_id = $2',
+        userId,
+        p.user_id
+      );
+      isSubscribedToAuthor = !!sub;
+    }
+    const poll = await getPollForPost(p.id, userId);
+
+    res.json({
+      ...p,
+      reactions: reactions.reduce((acc, r) => ({ ...acc, [r.type]: r.count }), {}),
+      userReactions: userReactions.map(r => r.type),
+      comments: comments.count,
+      isSubscribedToAuthor,
+      poll
+    });
+  });
+
+  async function savePollForPost(postId, pollData, created_at) {
+    if (!pollData || !pollData.question || !Array.isArray(pollData.options) || pollData.options.length < 2) return;
+    const pollResult = await db.run(
+      'INSERT INTO polls (post_id, question, created_at) VALUES (?, ?, ?)',
+      postId, pollData.question.trim(), created_at
+    );
+    const pollId = pollResult.lastID;
+    for (let i = 0; i < pollData.options.length; i++) {
+      const opt = pollData.options[i];
+      if (opt && opt.trim()) {
+        await db.run('INSERT INTO poll_options (poll_id, text, sort_order) VALUES (?, ?, ?)', pollId, opt.trim(), i);
+      }
+    }
+  }
+
+  async function getPollForPost(postId, userId) {
+    const poll = await db.get('SELECT id, question FROM polls WHERE post_id = ?', postId);
+    if (!poll) return null;
+    const options = await db.all(
+      'SELECT po.id, po.text, COUNT(pv.id) as votes FROM poll_options po LEFT JOIN poll_votes pv ON pv.option_id = po.id WHERE po.poll_id = ? GROUP BY po.id ORDER BY po.sort_order',
+      poll.id
+    );
+    let userVote = null;
+    if (userId) {
+      const vote = await db.get('SELECT option_id FROM poll_votes WHERE poll_id = ? AND user_id = ?', poll.id, userId);
+      if (vote) userVote = vote.option_id;
+    }
+    return { id: poll.id, question: poll.question, options, userVote };
+  }
+
+  app.post('/api/posts', authMiddleware, async (req, res) => {
+    try {
+      const { content, category, poll } = req.body;
+      if (!content || content.trim() === '') {
+        return res.status(400).json({ error: 'content required' });
+      }
+      const created_at = Date.now();
+      const result = await db.run('INSERT INTO posts (user_id, content, image, audio, category, created_at) VALUES (?, ?, ?, ?, ?, ?)', req.user.id, content, null, null, category || null, created_at);
+      const postId = result.lastID;
+
+      if (poll) {
+        const pollData = typeof poll === 'string' ? JSON.parse(poll) : poll;
+        await savePollForPost(postId, pollData, created_at);
+      }
+
+      const post = await db.get('SELECT p.id, p.content, p.image, p.audio, p.category, p.created_at, u.id as user_id, u.username, u.avatar FROM posts p JOIN users u ON u.id = p.user_id WHERE p.id = ?', postId);
+      
+      // Notify all subscribers
+      const subscribers = await db.all('SELECT subscriber_id FROM subscriptions WHERE subscribed_to_id = ?', req.user.id);
+      for (const sub of subscribers) {
+        await db.run('INSERT INTO notifications (user_id, type, from_user_id, post_id, created_at) VALUES (?, ?, ?, ?, ?)', sub.subscriber_id, 'new_post', req.user.id, postId, created_at);
+      }
+      
+      console.log('Post created successfully');
+      res.json(post);
+>>>>>>> 43fc63577f740ec07265f99ac0d4769620c4ae8c
     } catch (err) {
       console.error('Error in POST /api/posts:', err);
       res.status(500).json({ error: err.message });
@@ -1877,6 +2348,7 @@ function adminMiddleware(req, res, next) {
 
   app.post('/api/posts/with-image', authMiddleware, uploadPostImage.single('image'), async (req, res) => {
     try {
+<<<<<<< HEAD
       const { content, channelId } = req.body;
       if (!content && !req.file) {
         return res.status(400).json({ error: 'content or image required' });
@@ -1899,6 +2371,30 @@ function adminMiddleware(req, res, next) {
       await notifySubscribersAboutPost(db, req.user.id, result.lastID, created_at);
       const post = await getPostRowById(db, result.lastID);
       res.json(mapPostRow(post));
+=======
+      const { content, category, poll } = req.body;
+      if (!content && !req.file) {
+        return res.status(400).json({ error: 'content or image required' });
+      }
+      const created_at = Date.now();
+      const imageUrl = req.file ? '/uploads/' + req.file.filename : null;
+      const result = await db.run('INSERT INTO posts (user_id, content, image, audio, category, created_at) VALUES (?, ?, ?, ?, ?, ?)', req.user.id, content || '', imageUrl, null, category || null, created_at);
+      const postId = result.lastID;
+
+      if (poll) {
+        const pollData = typeof poll === 'string' ? JSON.parse(poll) : poll;
+        await savePollForPost(postId, pollData, created_at);
+      }
+
+      const post = await db.get('SELECT p.id, p.content, p.image, p.audio, p.category, p.created_at, u.id as user_id, u.username, u.avatar FROM posts p JOIN users u ON u.id = p.user_id WHERE p.id = ?', postId);
+      
+      const subscribers = await db.all('SELECT subscriber_id FROM subscriptions WHERE subscribed_to_id = ?', req.user.id);
+      for (const sub of subscribers) {
+        await db.run('INSERT INTO notifications (user_id, type, from_user_id, post_id, created_at) VALUES (?, ?, ?, ?, ?)', sub.subscriber_id, 'new_post', req.user.id, postId, created_at);
+      }
+      
+      res.json(post);
+>>>>>>> 43fc63577f740ec07265f99ac0d4769620c4ae8c
     } catch (err) {
       console.error('Error in POST /api/posts/with-image:', err);
       res.status(500).json({ error: err.message });
@@ -1907,6 +2403,7 @@ function adminMiddleware(req, res, next) {
 
   app.post('/api/posts/with-media', authMiddleware, uploadPostMedia, async (req, res) => {
     try {
+<<<<<<< HEAD
       const { content, channelId } = req.body || {};
       const imageFiles = (req.files && req.files.image) ? (Array.isArray(req.files.image) ? req.files.image : [req.files.image]) : [];
       const audioFile = req.files && req.files.audio && req.files.audio[0];
@@ -1940,6 +2437,33 @@ function adminMiddleware(req, res, next) {
       const post = mapPostRow(row);
       post.images = imageUrls;
       post.videos = videoUrls;
+=======
+      const { content, category, poll } = req.body || {};
+      const imageFile = req.files && req.files.image && req.files.image[0];
+      const audioFile = req.files && req.files.audio && req.files.audio[0];
+      const videoFile = req.files && req.files.video && req.files.video[0];
+      if (!content && !imageFile && !audioFile && !videoFile) {
+        return res.status(400).json({ error: 'content, image, audio or video required' });
+      }
+      const created_at = Date.now();
+      const imageUrl = imageFile ? '/uploads/' + imageFile.filename : null;
+      const audioUrl = audioFile ? '/uploads/' + audioFile.filename : null;
+      const result = await db.run('INSERT INTO posts (user_id, content, image, audio, category, created_at) VALUES (?, ?, ?, ?, ?, ?)', req.user.id, content || '', imageUrl, audioUrl, category || null, created_at);
+      const postId = result.lastID;
+
+      if (poll) {
+        const pollData = typeof poll === 'string' ? JSON.parse(poll) : poll;
+        await savePollForPost(postId, pollData, created_at);
+      }
+
+      const post = await db.get('SELECT p.id, p.content, p.image, p.audio, p.category, p.created_at, u.id as user_id, u.username, u.avatar FROM posts p JOIN users u ON u.id = p.user_id WHERE p.id = ?', postId);
+      
+      const subscribers = await db.all('SELECT subscriber_id FROM subscriptions WHERE subscribed_to_id = ?', req.user.id);
+      for (const sub of subscribers) {
+        await db.run('INSERT INTO notifications (user_id, type, from_user_id, post_id, created_at) VALUES (?, ?, ?, ?, ?)', sub.subscriber_id, 'new_post', req.user.id, postId, created_at);
+      }
+      
+>>>>>>> 43fc63577f740ec07265f99ac0d4769620c4ae8c
       res.json(post);
     } catch (err) {
       console.error('Error in POST /api/posts/with-media:', err);
@@ -1947,6 +2471,7 @@ function adminMiddleware(req, res, next) {
     }
   });
 
+<<<<<<< HEAD
   // Update post content (owner only, without changing media)
   app.put('/api/posts/:id', authMiddleware, async (req, res) => {
     const postId = req.params.id;
@@ -2009,11 +2534,14 @@ function adminMiddleware(req, res, next) {
     }
   });
 
+=======
+>>>>>>> 43fc63577f740ec07265f99ac0d4769620c4ae8c
   app.post('/api/posts/:id/reaction', authMiddleware, async (req, res) => {
     const postId = req.params.id;
     const { type } = req.body;
     if (!type) return res.status(400).json({ error: 'type required' });
     try {
+<<<<<<< HEAD
       const sourceRow = await getPostRowById(db, postId);
       if (!sourceRow) return res.status(404).json({ error: 'Post not found' });
       if (!(await canAccessPostRow(db, sourceRow, req.user.id, new Map()))) {
@@ -2023,11 +2551,18 @@ function adminMiddleware(req, res, next) {
     } catch (err) {
       // If unique constraint conflict (already reacted with same type), remove it (toggle)
       await db.run('DELETE FROM reactions WHERE post_id = ? AND user_id = ? AND type = ?', postId, req.user.id, type);
+=======
+      await db.run('INSERT INTO reactions (post_id, user_id, type) VALUES (?, $2, $3)', postId, req.user.id, type);
+    } catch (err) {
+      // If unique constraint conflict (already reacted with same type), remove it (toggle)
+      await db.run('DELETE FROM reactions WHERE post_id = ? AND user_id = $2 AND type = $3', postId, req.user.id, type);
+>>>>>>> 43fc63577f740ec07265f99ac0d4769620c4ae8c
     }
     const reactions = await db.all('SELECT type, COUNT(*) as count FROM reactions WHERE post_id = ? GROUP BY type', postId);
     res.json({ reactions: reactions.reduce((acc, r) => ({ ...acc, [r.type]: r.count }), {}) });
   });
 
+<<<<<<< HEAD
   app.get('/api/posts/:id/comments', async (req, res) => {
     const postId = req.params.id;
     const viewerId = parseAuthUserId(req.headers.authorization);
@@ -2038,18 +2573,88 @@ function adminMiddleware(req, res, next) {
     }
     const comments = await db.all(`
       SELECT c.id, c.content, c.created_at, u.id as user_id, u.username, u.avatar
+=======
+  app.post('/api/polls/:pollId/vote', authMiddleware, async (req, res) => {
+    const pollId = parseInt(req.params.pollId, 10);
+    const { optionId } = req.body;
+    if (!optionId) return res.status(400).json({ error: 'optionId required' });
+    try {
+      const poll = await db.get('SELECT id FROM polls WHERE id = ?', pollId);
+      if (!poll) return res.status(404).json({ error: 'poll not found' });
+      const option = await db.get('SELECT id FROM poll_options WHERE id = ? AND poll_id = ?', optionId, pollId);
+      if (!option) return res.status(400).json({ error: 'invalid option' });
+
+      const existing = await db.get('SELECT option_id FROM poll_votes WHERE poll_id = ? AND user_id = ?', pollId, req.user.id);
+      if (existing) {
+        if (existing.option_id === optionId) {
+          await db.run('DELETE FROM poll_votes WHERE poll_id = ? AND user_id = ?', pollId, req.user.id);
+        } else {
+          await db.run('UPDATE poll_votes SET option_id = ? WHERE poll_id = ? AND user_id = ?', optionId, pollId, req.user.id);
+        }
+      } else {
+        await db.run('INSERT INTO poll_votes (poll_id, option_id, user_id) VALUES (?, ?, ?)', pollId, optionId, req.user.id);
+      }
+
+      const options = await db.all(
+        'SELECT po.id, po.text, COUNT(pv.id) as votes FROM poll_options po LEFT JOIN poll_votes pv ON pv.option_id = po.id WHERE po.poll_id = ? GROUP BY po.id ORDER BY po.sort_order',
+        pollId
+      );
+      const vote = await db.get('SELECT option_id FROM poll_votes WHERE poll_id = ? AND user_id = ?', pollId, req.user.id);
+      res.json({ options, userVote: vote ? vote.option_id : null });
+    } catch (err) {
+      console.error('Error in POST /api/polls/:pollId/vote:', err);
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get('/api/posts/:id/comments', async (req, res) => {
+    const postId = req.params.id;
+    const auth = req.headers.authorization;
+    let userId = null;
+    if (auth) {
+      const parts = auth.split(' ');
+      if (parts.length === 2 && parts[0] === 'Bearer') {
+        try {
+          const payload = jwt.verify(parts[1], JWT_SECRET);
+          userId = payload.id;
+        } catch (err) {}
+      }
+    }
+
+    const comments = await db.all(
+      `
+      SELECT c.id, c.content, c.created_at,
+             u.id as user_id, u.username, u.avatar,
+             (SELECT COUNT(*) FROM comment_likes cl WHERE cl.comment_id = c.id) as likes,
+             (SELECT 1 FROM comment_likes cl WHERE cl.comment_id = c.id AND cl.user_id = ? LIMIT 1) as liked_by_me
+>>>>>>> 43fc63577f740ec07265f99ac0d4769620c4ae8c
       FROM comments c
       JOIN users u ON u.id = c.user_id
       WHERE c.post_id = ?
       ORDER BY c.created_at ASC
+<<<<<<< HEAD
     `, postId);
     res.json(comments);
+=======
+      `,
+      userId || -1,
+      postId
+    );
+    res.json(
+      comments.map(({ liked_by_me, ...c }) => ({
+        ...c,
+        likes: typeof c.likes === 'number' ? c.likes : 0,
+        likedByMe: !!liked_by_me
+      }))
+    );
+>>>>>>> 43fc63577f740ec07265f99ac0d4769620c4ae8c
   });
 
   app.post('/api/posts/:id/comments', authMiddleware, async (req, res) => {
     const postId = req.params.id;
     const { content } = req.body;
     if (!content) return res.status(400).json({ error: 'content required' });
+<<<<<<< HEAD
     const sourceRow = await getPostRowById(db, postId);
     if (!sourceRow) return res.status(404).json({ error: 'Post not found' });
     if (!(await canAccessPostRow(db, sourceRow, req.user.id, new Map()))) {
@@ -2077,6 +2682,164 @@ function adminMiddleware(req, res, next) {
       res.json({ views: updated.views });
     } catch (err) {
       console.error('Error in POST /api/posts/:id/view:', err);
+=======
+    const created_at = Date.now();
+    const result = await db.run('INSERT INTO comments (post_id, user_id, content, created_at) VALUES (?, ?, ?, ?)', postId, req.user.id, content, created_at);
+    const comment = await db.get(
+      `
+      SELECT c.id, c.content, c.created_at, u.id as user_id, u.username, u.avatar
+      FROM comments c
+      JOIN users u ON u.id = c.user_id
+      WHERE c.id = ?
+      `,
+      result.lastID
+    );
+    res.json({ ...comment, likes: 0, likedByMe: false });
+  });
+
+  app.post('/api/comments/:id/like', authMiddleware, async (req, res) => {
+    const commentId = parseInt(req.params.id, 10);
+    if (!commentId) return res.status(400).json({ error: 'invalid id' });
+    try {
+      const created_at = Date.now();
+      try {
+        await db.run(
+          'INSERT INTO comment_likes (comment_id, user_id, created_at) VALUES (?, ?, ?)',
+          commentId,
+          req.user.id,
+          created_at
+        );
+      } catch (err) {
+        // toggle off if already liked
+        await db.run('DELETE FROM comment_likes WHERE comment_id = ? AND user_id = ?', commentId, req.user.id);
+      }
+      const row = await db.get(
+        `
+        SELECT
+          (SELECT COUNT(*) FROM comment_likes WHERE comment_id = ?) as likes,
+          (SELECT 1 FROM comment_likes WHERE comment_id = ? AND user_id = ? LIMIT 1) as liked_by_me
+        `,
+        commentId,
+        commentId,
+        req.user.id
+      );
+      res.json({ likes: row && typeof row.likes === 'number' ? row.likes : 0, likedByMe: !!(row && row.liked_by_me) });
+    } catch (err) {
+      console.error('Error in POST /api/comments/:id/like:', err);
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.post('/api/polls/:id/vote', authMiddleware, async (req, res) => {
+    const pollId = parseInt(req.params.id, 10);
+    const { optionId } = req.body || {};
+    if (!pollId || !optionId) {
+      return res.status(400).json({ error: 'invalid poll or option' });
+    }
+    try {
+      const poll = await db.get('SELECT id FROM polls WHERE id = ?', pollId);
+      if (!poll) {
+        return res.status(404).json({ error: 'Poll not found' });
+      }
+      const option = await db.get('SELECT id FROM poll_options WHERE id = ? AND poll_id = $2', optionId, pollId);
+      if (!option) {
+        return res.status(400).json({ error: 'Invalid option for this poll' });
+      }
+      const existing = await db.get(
+        'SELECT id FROM poll_votes WHERE poll_id = ? AND user_id = $2',
+        pollId,
+        req.user.id
+      );
+      const now = Date.now();
+      if (existing) {
+        await db.run(
+          'UPDATE poll_votes SET option_id = ?, created_at = $2 WHERE id = $3',
+          optionId,
+          now,
+          existing.id
+        );
+      } else {
+        await db.run(
+          'INSERT INTO poll_votes (poll_id, option_id, user_id, created_at) VALUES (?, $2, $3, $4)',
+          pollId,
+          optionId,
+          req.user.id,
+          now
+        );
+      }
+
+      const options = await db.all(
+        'SELECT o.id, o.text, (SELECT COUNT(*) FROM poll_votes v WHERE v.option_id = o.id) as votes FROM poll_options o WHERE o.poll_id = ?',
+        pollId
+      );
+      let totalVotes = 0;
+      options.forEach(o => { totalVotes += o.votes; });
+      const userVote = await db.get(
+        'SELECT option_id FROM poll_votes WHERE poll_id = ? AND user_id = $2',
+        pollId,
+        req.user.id
+      );
+      res.json({
+        pollId,
+        options,
+        totalVotes,
+        userVoteOptionId: userVote ? userVote.option_id : null
+      });
+    } catch (err) {
+      console.error('Error in POST /api/polls/:id/vote:', err);
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.put('/api/posts/:id', authMiddleware, async (req, res) => {
+    const postId = parseInt(req.params.id, 10);
+    const { content } = req.body || {};
+    if (!postId) return res.status(400).json({ error: 'invalid id' });
+    if (!content || !content.trim()) {
+      return res.status(400).json({ error: 'content required' });
+    }
+    try {
+      const existing = await db.get('SELECT * FROM posts WHERE id = ?', postId);
+      if (!existing) {
+        return res.status(404).json({ error: 'Post not found' });
+      }
+      if (existing.user_id !== req.user.id) {
+        return res.status(403).json({ error: 'You can only edit your own posts' });
+      }
+      await db.run('UPDATE posts SET content = ? WHERE id = $2', content.trim(), postId);
+
+      const p = await db.get(`
+        SELECT p.id, p.content, p.image, p.audio, p.category, p.created_at,
+               u.id as user_id, u.username, u.avatar
+        FROM posts p
+        JOIN users u ON u.id = p.user_id
+        WHERE p.id = ?
+      `, postId);
+
+      const reactions = await db.all('SELECT type, COUNT(*) as count FROM reactions WHERE post_id = ? GROUP BY type', p.id);
+      const comments = await db.get('SELECT COUNT(*) as count FROM comments WHERE post_id = ?', p.id);
+
+      let userReactions = [];
+      let isSubscribedToAuthor = false;
+      const userId = req.user.id;
+      userReactions = await db.all('SELECT type FROM reactions WHERE post_id = ? AND user_id = $2', p.id, userId);
+      const sub = await db.get(
+        'SELECT 1 FROM subscriptions WHERE subscriber_id = ? AND subscribed_to_id = $2',
+        userId,
+        p.user_id
+      );
+      isSubscribedToAuthor = !!sub;
+
+      res.json({
+        ...p,
+        reactions: reactions.reduce((acc, r) => ({ ...acc, [r.type]: r.count }), {}),
+        userReactions: userReactions.map(r => r.type),
+        comments: comments.count,
+        isSubscribedToAuthor
+      });
+    } catch (err) {
+      console.error('Error in PUT /api/posts/:id:', err);
+>>>>>>> 43fc63577f740ec07265f99ac0d4769620c4ae8c
       res.status(500).json({ error: err.message });
     }
   });
@@ -2084,7 +2847,11 @@ function adminMiddleware(req, res, next) {
   app.delete('/api/posts/:id', authMiddleware, async (req, res) => {
     const postId = req.params.id;
     try {
+<<<<<<< HEAD
       const post = await db.get('SELECT user_id, image, audio, video, images, videos FROM posts WHERE id = ?', postId);
+=======
+      const post = await db.get('SELECT user_id, image, audio FROM posts WHERE id = ?', postId);
+>>>>>>> 43fc63577f740ec07265f99ac0d4769620c4ae8c
       if (!post) {
         return res.status(404).json({ error: 'Post not found' });
       }
@@ -2094,12 +2861,25 @@ function adminMiddleware(req, res, next) {
       
       // Delete related data
       await db.run('DELETE FROM reactions WHERE post_id = ?', postId);
+<<<<<<< HEAD
       await db.run('DELETE FROM comments WHERE post_id = ?', postId);
       await db.run('DELETE FROM notifications WHERE post_id = ?', postId);
+=======
+      await db.run('DELETE FROM comment_likes WHERE comment_id IN (SELECT id FROM comments WHERE post_id = ?)', postId);
+      await db.run('DELETE FROM comments WHERE post_id = ?', postId);
+      await db.run('DELETE FROM notifications WHERE post_id = ?', postId);
+      const pollRow = await db.get('SELECT id FROM polls WHERE post_id = ?', postId);
+      if (pollRow) {
+        await db.run('DELETE FROM poll_votes WHERE poll_id = ?', pollRow.id);
+        await db.run('DELETE FROM poll_options WHERE poll_id = ?', pollRow.id);
+        await db.run('DELETE FROM polls WHERE id = ?', pollRow.id);
+      }
+>>>>>>> 43fc63577f740ec07265f99ac0d4769620c4ae8c
       
       // Delete post
       await db.run('DELETE FROM posts WHERE id = ?', postId);
       
+<<<<<<< HEAD
       const filesToDelete = new Set();
       if (post.image) filesToDelete.add(post.image);
       if (post.audio) filesToDelete.add(post.audio);
@@ -2121,6 +2901,23 @@ function adminMiddleware(req, res, next) {
           await fs.unlink(diskPath);
         } catch (err) {
           console.error('Error deleting file:', err);
+=======
+      // Delete files if they exist
+      if (post.image) {
+        const imagePath = uploadPathFromUrl(post.image);
+        try {
+          if (imagePath) await fs.unlink(imagePath);
+        } catch (err) {
+          console.error('Error deleting image file:', err);
+        }
+      }
+      if (post.audio) {
+        const audioPath = uploadPathFromUrl(post.audio);
+        try {
+          if (audioPath) await fs.unlink(audioPath);
+        } catch (err) {
+          console.error('Error deleting audio file:', err);
+>>>>>>> 43fc63577f740ec07265f99ac0d4769620c4ae8c
         }
       }
       
@@ -2131,6 +2928,7 @@ function adminMiddleware(req, res, next) {
     }
   });
 
+<<<<<<< HEAD
   app.put('/api/users/profile', authMiddleware, async (req, res) => {
     const body = req.body || {};
     const allowedFields = ['avatar', 'bio', 'background', 'is_private'];
@@ -2172,6 +2970,46 @@ function adminMiddleware(req, res, next) {
   app.get('/api/users/check-username', async (req, res) => {
     const q = String(req.query.username || '').trim();
     if (!q) return res.status(400).json({ error: 'username required' });
+=======
+  app.put('/api/posts/:id', authMiddleware, async (req, res) => {
+    const postId = parseInt(req.params.id, 10);
+    try {
+      const existing = await db.get('SELECT id, user_id, content, category FROM posts WHERE id = ?', postId);
+      if (!existing) {
+        return res.status(404).json({ error: 'Post not found' });
+      }
+      if (existing.user_id !== req.user.id) {
+        return res.status(403).json({ error: 'You can only edit your own posts' });
+      }
+
+      const { content, category } = req.body || {};
+      const newContent = typeof content === 'string' ? content : existing.content;
+      const newCategory = typeof category === 'string'
+        ? (category && category.trim() ? category.trim() : null)
+        : existing.category;
+
+      await db.run(
+        'UPDATE posts SET content = ?, category = ? WHERE id = ?',
+        newContent,
+        newCategory,
+        postId
+      );
+
+      const updated = await db.get(
+        'SELECT p.id, p.content, p.image, p.audio, p.category, p.created_at, u.id as user_id, u.username, u.avatar FROM posts p JOIN users u ON u.id = p.user_id WHERE p.id = ?',
+        postId
+      );
+
+      res.json(updated);
+    } catch (err) {
+      console.error('Error in PUT /api/posts/:id:', err);
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get('/api/users/:id', async (req, res) => {
+    const userId = req.params.id;
+>>>>>>> 43fc63577f740ec07265f99ac0d4769620c4ae8c
     let currentUserId = null;
     const auth = req.headers.authorization;
     if (auth) {
@@ -2183,6 +3021,7 @@ function adminMiddleware(req, res, next) {
         } catch (err) {}
       }
     }
+<<<<<<< HEAD
     const existing = await db.get('SELECT id FROM users WHERE LOWER(username) = LOWER(?)', q);
     const available = !existing || (currentUserId && Number(existing.id) === Number(currentUserId));
     res.json({ available });
@@ -2283,6 +3122,39 @@ function adminMiddleware(req, res, next) {
     const user = await db.get('SELECT id, username, avatar, bio, background, badge, is_private FROM users WHERE id = ?', req.user.id);
     const token = jwt.sign({ id: user.id, username: user.username }, JWT_SECRET);
     res.json({ token, ...user });
+=======
+    const user = await db.get('SELECT id, username, avatar, bio FROM users WHERE id = ?', userId);
+    if (!user) return res.status(404).json({ error: 'user not found' });
+    const posts = await db.all('SELECT id, content, category, created_at FROM posts WHERE user_id = ? ORDER BY created_at DESC', userId);
+    const subscribers = await db.get('SELECT COUNT(*) as count FROM subscriptions WHERE subscribed_to_id = ?', userId);
+    let isSubscribed = false;
+    if (currentUserId) {
+      const sub = await db.get('SELECT id FROM subscriptions WHERE subscriber_id = ? AND subscribed_to_id = $2', currentUserId, userId);
+      isSubscribed = !!sub;
+    }
+    res.json({ ...user, posts, subscribers: subscribers.count, isSubscribed });
+  });
+
+  app.put('/api/users/profile', authMiddleware, async (req, res) => {
+    const { avatar, bio } = req.body;
+    if (!avatar && !bio) return res.status(400).json({ error: 'avatar or bio required' });
+    const updates = [];
+    const values = [];
+    if (avatar) { updates.push('avatar = ?'); values.push(avatar); }
+    if (bio) { updates.push('bio = $2'); values.push(bio); }
+    values.push(req.user.id);
+    await db.run(`UPDATE users SET ${updates.join(', ')} WHERE id = $3`, values);
+    const user = await db.get('SELECT id, username, avatar, bio FROM users WHERE id = ?', req.user.id);
+    res.json(user);
+  });
+
+  app.post('/api/users/avatar', authMiddleware, upload.single('avatar'), async (req, res) => {
+    if (!req.file) return res.status(400).json({ error: 'no file uploaded' });
+    const avatarUrl = '/uploads/' + req.file.filename;
+    await db.run('UPDATE users SET avatar = ? WHERE id = $2', avatarUrl, req.user.id);
+    const user = await db.get('SELECT id, username, avatar, bio FROM users WHERE id = ?', req.user.id);
+    res.json(user);
+>>>>>>> 43fc63577f740ec07265f99ac0d4769620c4ae8c
   });
 
   app.post('/api/subscribe/:userId', authMiddleware, async (req, res) => {
@@ -2290,6 +3162,7 @@ function adminMiddleware(req, res, next) {
     if (targetUserId === req.user.id) {
       return res.status(400).json({ error: 'cannot subscribe to yourself' });
     }
+<<<<<<< HEAD
     const targetUser = await getUserPrivacy(db, targetUserId);
     if (!targetUser) {
       return res.status(404).json({ error: 'user not found' });
@@ -2311,6 +3184,13 @@ function adminMiddleware(req, res, next) {
       await db.run('INSERT INTO subscriptions (subscriber_id, subscribed_to_id, created_at) VALUES (?, ?, ?)', req.user.id, targetUserId, created_at);
       // Create notification for the user being subscribed to
       await db.run('INSERT INTO notifications (user_id, type, from_user_id, created_at) VALUES (?, ?, ?, ?)', targetUserId, 'subscribe', req.user.id, created_at);
+=======
+    try {
+      const created_at = Date.now();
+      await db.run('INSERT INTO subscriptions (subscriber_id, subscribed_to_id, created_at) VALUES (?, $2, $3)', req.user.id, targetUserId, created_at);
+      // Create notification for the user being subscribed to
+      await db.run('INSERT INTO notifications (user_id, type, from_user_id, created_at) VALUES (?, $2, $3, $4)', targetUserId, 'subscribe', req.user.id, created_at);
+>>>>>>> 43fc63577f740ec07265f99ac0d4769620c4ae8c
       res.json({ subscribed: true });
     } catch (err) {
       res.status(400).json({ error: 'already subscribed' });
@@ -2319,7 +3199,11 @@ function adminMiddleware(req, res, next) {
 
   app.post('/api/unsubscribe/:userId', authMiddleware, async (req, res) => {
     const targetUserId = parseInt(req.params.userId);
+<<<<<<< HEAD
     await db.run('DELETE FROM subscriptions WHERE subscriber_id = ? AND subscribed_to_id = ?', req.user.id, targetUserId);
+=======
+    await db.run('DELETE FROM subscriptions WHERE subscriber_id = ? AND subscribed_to_id = $2', req.user.id, targetUserId);
+>>>>>>> 43fc63577f740ec07265f99ac0d4769620c4ae8c
     res.json({ subscribed: false });
   });
 
@@ -2334,6 +3218,7 @@ function adminMiddleware(req, res, next) {
     res.json(subscriptions);
   });
 
+<<<<<<< HEAD
   app.get('/api/users/:id/subscriptions', async (req, res) => {
     const userId = Number(req.params.id);
     if (!Number.isFinite(userId)) {
@@ -2382,12 +3267,23 @@ function adminMiddleware(req, res, next) {
       JOIN users u ON u.id = n.from_user_id
       LEFT JOIN posts p ON p.id = n.post_id
       LEFT JOIN content_access_requests car ON car.id = n.request_id
+=======
+  app.get('/api/notifications', authMiddleware, async (req, res) => {
+    const notifications = await db.all(`
+      SELECT n.id, n.type, n.is_read, n.created_at, n.message as message,
+             u.id as from_user_id, u.username, u.avatar,
+             p.id as post_id, p.content as post_content
+      FROM notifications n
+      JOIN users u ON u.id = n.from_user_id
+      LEFT JOIN posts p ON p.id = n.post_id
+>>>>>>> 43fc63577f740ec07265f99ac0d4769620c4ae8c
       WHERE n.user_id = ?
       ORDER BY n.created_at DESC
     `, req.user.id);
     res.json(notifications);
   });
 
+<<<<<<< HEAD
   app.post('/api/users/:id/request-view', authMiddleware, async (req, res) => {
     const ownerUserId = Number(req.params.id);
     if (!ownerUserId || ownerUserId === Number(req.user.id)) {
@@ -2446,6 +3342,10 @@ function adminMiddleware(req, res, next) {
 
   app.post('/api/notifications/:id/read', authMiddleware, async (req, res) => {
     await db.run('UPDATE notifications SET is_read = 1 WHERE id = ? AND user_id = ?', req.params.id, req.user.id);
+=======
+  app.post('/api/notifications/:id/read', authMiddleware, async (req, res) => {
+    await db.run('UPDATE notifications SET is_read = 1 WHERE id = ? AND user_id = $2', req.params.id, req.user.id);
+>>>>>>> 43fc63577f740ec07265f99ac0d4769620c4ae8c
     res.json({ success: true });
   });
 
@@ -2454,7 +3354,40 @@ function adminMiddleware(req, res, next) {
     res.json({ success: true });
   });
 
+<<<<<<< HEAD
   app.post('/api/messages/:userId', authMiddleware, async (req, res) => {
+=======
+  app.post('/api/system-notifications', authMiddleware, async (req, res) => {
+    try {
+      const { content } = req.body || {};
+      if (!content || !content.trim()) {
+        return res.status(400).json({ error: 'content required' });
+      }
+      if (!req.user || req.user.username !== 'blau3') {
+        return res.status(403).json({ error: 'forbidden' });
+      }
+      const adminId = req.user.id;
+      const created_at = Date.now();
+      const users = await db.all('SELECT id FROM users WHERE id != ?', adminId);
+      for (const u of users) {
+        await db.run(
+          'INSERT INTO notifications (user_id, type, from_user_id, post_id, message, created_at) VALUES (?, $2, $3, NULL, $4, $5)',
+          u.id,
+          'system',
+          adminId,
+          content.trim(),
+          created_at
+        );
+      }
+      res.json({ success: true, delivered: users.length });
+    } catch (err) {
+      console.error('Error in POST /api/system-notifications:', err);
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.post('/api/messages/:userId(\\d+)', authMiddleware, async (req, res) => {
+>>>>>>> 43fc63577f740ec07265f99ac0d4769620c4ae8c
     const toUserId = parseInt(req.params.userId);
     const { content } = req.body;
     if (!content || content.trim() === '') {
@@ -2462,13 +3395,18 @@ function adminMiddleware(req, res, next) {
     }
     try {
       const created_at = Date.now();
+<<<<<<< HEAD
       await db.run('INSERT INTO messages (from_user_id, to_user_id, content, created_at) VALUES (?, ?, ?, ?)', req.user.id, toUserId, content, created_at);
+=======
+      await db.run('INSERT INTO messages (from_user_id, to_user_id, content, created_at) VALUES (?, $2, $3, $4)', req.user.id, toUserId, content, created_at);
+>>>>>>> 43fc63577f740ec07265f99ac0d4769620c4ae8c
       res.json({ success: true });
     } catch (err) {
       res.status(500).json({ error: err.message });
     }
   });
 
+<<<<<<< HEAD
   app.post('/api/messages/:userId/with-media', authMiddleware, uploadPostMedia, async (req, res) => {
     const toUserId = parseInt(req.params.userId);
     try {
@@ -2523,6 +3461,18 @@ function adminMiddleware(req, res, next) {
       );
       msg.reactions = reactions;
     }
+=======
+  app.get('/api/messages/:userId(\\d+)', authMiddleware, async (req, res) => {
+    const otherUserId = parseInt(req.params.userId);
+    const messages = await db.all(`
+      SELECT m.id, m.from_user_id, m.to_user_id, m.content, m.is_read, m.created_at, 
+             u.username, u.avatar
+      FROM messages m
+      JOIN users u ON u.id = m.from_user_id
+      WHERE (m.from_user_id = ? AND m.to_user_id = $2) OR (m.from_user_id = $3 AND m.to_user_id = $4)
+      ORDER BY m.created_at ASC
+    `, req.user.id, otherUserId, otherUserId, req.user.id);
+>>>>>>> 43fc63577f740ec07265f99ac0d4769620c4ae8c
     res.json(messages);
   });
 
@@ -2530,6 +3480,7 @@ function adminMiddleware(req, res, next) {
     const dialogs = await db.all(`
       SELECT DISTINCT 
         CASE WHEN m.from_user_id = ? THEN m.to_user_id ELSE m.from_user_id END as user_id,
+<<<<<<< HEAD
         u.username, u.avatar, u.last_seen,
         MAX(m.created_at) as last_message_at,
         (SELECT content FROM messages WHERE 
@@ -2821,12 +3772,117 @@ function adminMiddleware(req, res, next) {
       console.error('Support email send failed:', err.message);
     }
     res.json({ success: true });
+=======
+        u.username, u.avatar,
+        MAX(m.created_at) as last_message_at,
+        (SELECT content FROM messages WHERE 
+          (from_user_id = $2 AND to_user_id = u.id) OR (from_user_id = u.id AND to_user_id = $3)
+          ORDER BY created_at DESC LIMIT 1) as last_message_content
+      FROM messages m
+      JOIN users u ON u.id = CASE WHEN m.from_user_id = $4 THEN m.to_user_id ELSE m.from_user_id END
+      WHERE m.from_user_id = $5 OR m.to_user_id = $6
+      GROUP BY user_id
+      ORDER BY last_message_at DESC
+    `, req.user.id, req.user.id, req.user.id, req.user.id, req.user.id, req.user.id);
+    res.json(dialogs);
+  });
+
+  app.post('/api/messages/:userId(\\d+)/read', authMiddleware, async (req, res) => {
+    const fromUserId = parseInt(req.params.userId);
+    await db.run('UPDATE messages SET is_read = 1 WHERE from_user_id = ? AND to_user_id = $2', fromUserId, req.user.id);
+    res.json({ success: true });
+  });
+
+  app.get('/api/messages/unread-count', authMiddleware, async (req, res) => {
+    const row = await db.get(
+      'SELECT COUNT(*) as count FROM messages WHERE to_user_id = ? AND is_read = 0',
+      req.user.id
+    );
+    res.json({ count: row ? row.count : 0 });
+  });
+
+  // Stories: create and list
+  app.post('/api/stories', authMiddleware, (req, res) => {
+    uploadStoryMedia(req, res, async (err) => {
+      if (err) {
+        return res.status(400).json({ error: err.message });
+      }
+      try {
+        const { content } = req.body || {};
+        const file = req.file;
+        if ((!content || !content.trim()) && !file) {
+          return res.status(400).json({ error: 'content or media required' });
+        }
+        const created_at = Date.now();
+        const expires_at = created_at + 24 * 60 * 60 * 1000; // 24h
+        const mediaUrl = file ? '/uploads/' + file.filename : null;
+        await db.run(
+          'INSERT INTO stories (user_id, content, media, created_at, expires_at) VALUES (?, $2, $3, $4, $5)',
+          req.user.id,
+          content ? content.trim() : '',
+          mediaUrl,
+          created_at,
+          expires_at
+        );
+        res.json({ success: true });
+      } catch (e) {
+        console.error('Error in POST /api/stories:', e);
+        res.status(500).json({ error: e.message });
+      }
+    });
+  });
+
+  app.get('/api/stories', authMiddleware, async (req, res) => {
+    try {
+      const now = Date.now();
+      const userId = req.user.id;
+      const rows = await db.all(
+        `
+        SELECT s.id, s.content, s.media, s.created_at,
+               u.id as user_id, u.username, u.avatar
+        FROM stories s
+        JOIN users u ON u.id = s.user_id
+        WHERE s.expires_at > ?
+          AND (s.user_id = $2
+               OR s.user_id IN (SELECT subscribed_to_id FROM subscriptions WHERE subscriber_id = $3))
+        ORDER BY s.created_at DESC
+        `,
+        now,
+        userId,
+        userId
+      );
+      res.json(rows);
+    } catch (e) {
+      console.error('Error in GET /api/stories:', e);
+      res.status(500).json({ error: e.message });
+    }
+  });
+
+  app.get('/api/settings/logo', async (req, res) => {
+    try {
+      const row = await db.get("SELECT value FROM settings WHERE key = 'logo_url'");
+      res.json({ logoUrl: row ? row.value : null });
+    } catch (e) {
+      res.json({ logoUrl: null });
+    }
+  });
+
+  app.post('/api/settings/logo', authMiddleware, (req, res) => {
+    uploadLogo(req, res, async (err) => {
+      if (err) return res.status(400).json({ error: err.message });
+      if (!req.file) return res.status(400).json({ error: 'no file uploaded' });
+      const logoUrl = '/uploads/' + req.file.filename;
+      await db.run("INSERT INTO settings (key, value) VALUES ('logo_url', ?) ON CONFLICT(key) DO UPDATE SET value = ?", logoUrl);
+      res.json({ logoUrl });
+    });
+>>>>>>> 43fc63577f740ec07265f99ac0d4769620c4ae8c
   });
 
   app.get('/api/health', (req, res) => {
     res.json({ status: 'ok' });
   });
 
+<<<<<<< HEAD
   // Cleanup expired stories every minute
   setInterval(async () => {
     try {
@@ -2843,6 +3899,11 @@ function adminMiddleware(req, res, next) {
     }
   }, 60 * 1000); // Run every minute
 
+=======
+  // Initialize database
+  db = await initDb();
+  
+>>>>>>> 43fc63577f740ec07265f99ac0d4769620c4ae8c
   app.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);
   });

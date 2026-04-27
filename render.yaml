@@ -2,6 +2,7 @@ services:
   - type: web
     name: green-social
     runtime: node
+<<<<<<< HEAD
     plan: starter
     buildCommand: npm install
     startCommand: npm start
@@ -13,6 +14,22 @@ services:
         value: /var/data
       - key: JWT_SECRET
         generateValue: true
+=======
+    plan: free
+    autoDeploy: true
+    buildCommand: npm ci --omit=dev
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATA_DIR
+        value: /var/data
+      - key: UPLOAD_DIR
+        value: /var/data/uploads
+      - key: JWT_SECRET
+        sync: false
+>>>>>>> 43fc63577f740ec07265f99ac0d4769620c4ae8c
     disk:
       name: green-social-data
       mountPath: /var/data

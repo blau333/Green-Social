@@ -8,4 +8,9 @@ services:
       - ./data:/app/data
     environment:
       - NODE_ENV=production
+<<<<<<< HEAD
+=======
+      - DATA_DIR=/app/data
+      - JWT_SECRET=change-me-in-production
+>>>>>>> 43fc63577f740ec07265f99ac0d4769620c4ae8c
     restart: unless-stopped

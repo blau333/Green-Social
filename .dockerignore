@@ -1,5 +1,10 @@
 node_modules
 data.db
+<<<<<<< HEAD
+=======
+data
+uploads
+>>>>>>> 43fc63577f740ec07265f99ac0d4769620c4ae8c
 npm-debug.log
 .env
 .git

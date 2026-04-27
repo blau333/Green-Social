@@ -3,6 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
+<<<<<<< HEAD
   <title>tap</title>
   <link rel="stylesheet" href="/styles.css?v=20260427a">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -18,11 +19,62 @@
           <img src="/tap-logo.png" alt="tap" class="site-brand-image" />
         </a>
         <button id="header-news-btn" class="header-news-btn" type="button" aria-label="News">📰</button>
+=======
+
+  <link rel="stylesheet" href="/styles.css">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.4/howler.min.js"></script>
+
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="header-left">
+        <div class="header-title-row">
+          <img src="/gs-logo.png" alt="Green-Social logo" class="site-logo">
+          <h1>Green-Social</h1>
+        </div>
+        <div id="welcome" class="welcome-text"></div>
+        <div id="category-bar" class="category-bar"></div>
+      </div>
+      <div class="header-right">
+        <div class="user-search-row">
+          <button id="btn-new-story" type="button" class="icon-btn" title="New story">➕</button>
+          <input id="user-id-search" type="number" min="1" placeholder="User ID" aria-label="Search by user ID">
+          <button id="btn-search-user" type="button" class="btn-search-user" title="Search user">🔍</button>
+        </div>
+        <div class="controls">
+          <img id="user-avatar" class="header-avatar hidden" src="" alt="Profile">
+          <div class="settings-wrapper">
+            <button id="settings-btn" type="button" class="icon-btn" aria-label="Settings" aria-haspopup="menu" aria-expanded="false" title="Settings">⚙️</button>
+            <div id="settings-menu" class="settings-menu hidden" role="menu" aria-label="Settings menu">
+              <div class="settings-row">
+                <span id="settings-language-label" class="settings-label">Language</span>
+                <select id="lang-select" aria-label="language-select">
+                  <option value="ru">Рус🪆</option>
+                  <option value="en">Eng💂‍♂️</option>
+                </select>
+              </div>
+              <div class="settings-row">
+                <span id="settings-theme-label" class="settings-label">Theme</span>
+                <button id="theme-toggle" type="button" title="Toggle theme">Dark</button>
+              </div>
+              <div class="settings-divider" aria-hidden="true"></div>
+              <button id="logout-btn" type="button" class="settings-logout-btn btn-primary hidden">
+                Logout
+              </button>
+            </div>
+          </div>
+        </div>
+        <div id="auth-area"></div>
+>>>>>>> 43fc63577f740ec07265f99ac0d4769620c4ae8c
       </div>
     </header>
 
     <main>
       <section id="feed-page" class="page">
+<<<<<<< HEAD
         <section id="create-post" class="card hidden">
           <textarea id="post-content" placeholder=""></textarea>
           <div id="ai-generate-menu" class="ai-generate-menu hidden">
@@ -86,11 +138,45 @@
           <div class="stories-container">
             <!-- Stories will be rendered here -->
           </div>
+=======
+        <section id="stories-bar" class="card stories-bar hidden"></section>
+        <section id="create-post" class="card hidden">
+          <textarea id="post-content" class="post-textarea" placeholder="What's new?"></textarea>
+          <div class="post-category-row">
+            <button id="post-category-emoji" type="button" class="emoji-picker-btn" title="Выбрать эмодзи категории">😊</button>
+            <input id="post-category-text" class="post-category-input" placeholder="Category text (optional)">
+          </div>
+          <div id="poll-fields" class="poll-create-fields poll-block" style="display:none;">
+            <div id="create-poll-title" class="poll-question">📊 Create poll</div>
+            <input id="poll-question" type="text" placeholder="Вопрос для опроса" class="poll-create-input">
+            <div id="poll-options">
+              <input type="text" class="poll-option-input poll-create-input" placeholder="Вариант 1">
+              <input type="text" class="poll-option-input poll-create-input" placeholder="Вариант 2">
+            </div>
+            <button id="add-poll-option" type="button" class="poll-add-btn">+ Добавить вариант</button>
+          </div>
+          <div style="margin-bottom:8px">
+            <input id="post-image" type="file" accept="image/*" style="display:none">
+            <input id="post-audio" type="file" accept="audio/*" style="display:none">
+            <input id="post-video" type="file" accept="video/*" style="display:none">
+            <button id="btn-image" title="Add image" type="button" class="media-btn">📷</button>
+            <button id="btn-audio" title="Add audio" type="button" class="media-btn">🎵</button>
+            <button id="btn-video" title="Add video" type="button" class="media-btn">🎬</button>
+            <button id="btn-polls" title="Создать опрос" type="button" class="media-btn">📊</button>
+            <button id="btn-post">⬆️</button>
+          </div>
+        </section>
+
+        <section id="recommended-wrapper" class="card hidden">
+          <h3 id="recommended-title"></h3>
+          <section id="recommended-posts"></section>
+>>>>>>> 43fc63577f740ec07265f99ac0d4769620c4ae8c
         </section>
 
         <section id="posts"></section>
       </section>
 
+<<<<<<< HEAD
       <section id="news-page" class="page">
         <section id="create-news" class="card site-search-card hidden">
           <div class="site-search-head">
@@ -193,11 +279,43 @@
     <footer class="footer-row">
       <p id="footer-created"></p>
       <button id="support-btn" type="button" class="support-btn"></button>
+=======
+      <section id="subscriptions-page" class="page hidden">
+        <section id="subscriptions-users" class="card"></section>
+        <section id="subscriptions-posts"></section>
+      </section>
+
+      <section id="notifications-page" class="page hidden">
+        <div id="notifications-container"></div>
+      </section>
+
+      <section id="profile-page" class="page hidden">
+        <!-- Заполняется динамически в showProfile в app.js -->
+      </section>
+
+      <section id="messages-page" class="page hidden">
+        <div id="messages-container"></div>
+      </section>
+    </main>
+    <nav class="tabs tabs-bottom">
+      <button id="tab-feed" class="tab-btn active">📰</button>
+      <button id="tab-subscriptions" class="tab-btn">👥</button>
+      <button id="tab-notifications" class="tab-btn">🔔</button>
+      <button id="tab-messages" class="tab-btn">💬</button>
+    </nav>
+    <button id="scroll-top-btn" class="scroll-top-btn hidden" type="button" title="Back to top">⬆️</button>
+    <footer>
+      <p id="footer-credit">Created by blau3 and Komi</p>
+>>>>>>> 43fc63577f740ec07265f99ac0d4769620c4ae8c
       <a href="https://t.me/blau030" target="_blank">
         <img src="telegram.png" alt="Telegram" width="40">
       </a>
     </footer>
   </div>
+<<<<<<< HEAD
   <script src="/app.js?v=20260427a" defer></script>
+=======
+  <script src="/app.js"></script>
+>>>>>>> 43fc63577f740ec07265f99ac0d4769620c4ae8c
 </body>
 </html>
